@@ -23,13 +23,13 @@
 
 package com.bennero.server.network;
 
-import com.bennero.networking.AddressInformation;
+import com.bennero.common.networking.AddressInformation;
 import com.bennero.common.Constants;
-import com.bennero.logging.LogLevel;
-import com.bennero.logging.Logger;
-import com.bennero.messages.BroadcastAnnouncementDataPositions;
-import com.bennero.messages.BroadcastReplyDataPositions;
-import com.bennero.messages.MessageType;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.BroadcastAnnouncementDataPositions;
+import com.bennero.common.messages.BroadcastReplyDataPositions;
+import com.bennero.common.messages.MessageType;
 import com.bennero.server.message.BroadcastMessage;
 
 import java.io.IOException;
@@ -41,7 +41,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.networking.NetworkUtils.*;
+import static com.bennero.common.networking.NetworkUtils.*;
 import static com.bennero.server.Version.*;
 
 /**

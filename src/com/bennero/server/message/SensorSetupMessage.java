@@ -26,11 +26,11 @@ package com.bennero.server.message;
 import com.bennero.common.Sensor;
 import com.bennero.common.Skin;
 import com.bennero.common.SkinHelper;
-import com.bennero.messages.SensorDataPositions;
+import com.bennero.common.messages.SensorDataPositions;
 import javafx.scene.paint.Color;
 
 import static com.bennero.common.Constants.NAME_STRING_NUM_BYTES;
-import static com.bennero.networking.NetworkUtils.*;
+import static com.bennero.common.networking.NetworkUtils.*;
 
 /**
  * SensorSetupMessage stores the data of a sensor creation request. The SensorSetupMessage is sent by a connected client

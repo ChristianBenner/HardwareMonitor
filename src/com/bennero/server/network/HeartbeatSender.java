@@ -23,12 +23,12 @@
 
 package com.bennero.server.network;
 
-import com.bennero.logging.LogLevel;
-import com.bennero.logging.Logger;
-import com.bennero.networking.NetworkUtils;
-import com.bennero.osspecific.OSUtils;
-import com.bennero.osspecific.RaspberryPiScreenUtils;
-import com.bennero.messages.MessageType;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
+import com.bennero.common.networking.NetworkUtils;
+import com.bennero.common.osspecific.OSUtils;
+import com.bennero.common.osspecific.RaspberryPiScreenUtils;
+import com.bennero.common.messages.MessageType;
 import com.bennero.server.SynchronizedConnection;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.networking.NetworkUtils.writeToMessage;
+import static com.bennero.common.networking.NetworkUtils.writeToMessage;
 
 /**
  * HeartbeatSender sub-system manages sending heartbeat messages to the currently connected hardware monitor editor so

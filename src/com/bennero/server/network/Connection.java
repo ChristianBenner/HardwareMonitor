@@ -23,11 +23,11 @@
 
 package com.bennero.server.network;
 
-import com.bennero.logging.LogLevel;
-import com.bennero.logging.Logger;
-import com.bennero.networking.NetworkUtils;
-import com.bennero.messages.ConnectionRequestReplyDataPositions;
-import com.bennero.messages.MessageType;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
+import com.bennero.common.networking.NetworkUtils;
+import com.bennero.common.messages.ConnectionRequestReplyDataPositions;
+import com.bennero.common.messages.MessageType;
 import com.bennero.server.SynchronizedConnection;
 import com.bennero.server.Version;
 import com.bennero.server.event.*;
@@ -40,8 +40,8 @@ import java.io.InputStream;
 import java.nio.channels.SocketChannel;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.networking.NetworkUtils.isVersionCompatible;
-import static com.bennero.networking.NetworkUtils.writeStringToMessage;
+import static com.bennero.common.networking.NetworkUtils.isVersionCompatible;
+import static com.bennero.common.networking.NetworkUtils.writeStringToMessage;
 import static com.bennero.server.Version.*;
 import static com.bennero.server.message.ConnectionRequestMessage.processConnectionRequestMessageData;
 

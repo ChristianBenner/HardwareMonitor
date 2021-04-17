@@ -23,13 +23,13 @@
 
 package com.bennero.server.message;
 
-import com.bennero.networking.NetworkUtils;
-import com.bennero.messages.BroadcastAnnouncementDataPositions;
+import com.bennero.common.networking.NetworkUtils;
+import com.bennero.common.messages.BroadcastAnnouncementDataPositions;
 
 import static com.bennero.common.Constants.HW_EDITOR_SYSTEM_UNIQUE_CONNECTION_ID;
 import static com.bennero.common.Constants.IP4_ADDRESS_NUM_BYTES;
-import static com.bennero.networking.NetworkUtils.readBytes;
-import static com.bennero.networking.NetworkUtils.readLong;
+import static com.bennero.common.networking.NetworkUtils.readBytes;
+import static com.bennero.common.networking.NetworkUtils.readLong;
 
 /**
  * BroadcastMessage stores data from a received broadcast message such as the IP4 address that it came from. A

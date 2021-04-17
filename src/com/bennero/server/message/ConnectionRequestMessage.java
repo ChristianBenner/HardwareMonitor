@@ -23,12 +23,12 @@
 
 package com.bennero.server.message;
 
-import com.bennero.messages.ConnectionRequestDataPositions;
+import com.bennero.common.messages.ConnectionRequestDataPositions;
 
 import static com.bennero.common.Constants.IP4_ADDRESS_NUM_BYTES;
 import static com.bennero.common.Constants.NAME_STRING_NUM_BYTES;
-import static com.bennero.networking.NetworkUtils.readBytes;
-import static com.bennero.networking.NetworkUtils.readString;
+import static com.bennero.common.networking.NetworkUtils.readBytes;
+import static com.bennero.common.networking.NetworkUtils.readString;
 
 /**
  * ConnectionRequestMessage stores the data associated to a connection request sent by a client. This includes the

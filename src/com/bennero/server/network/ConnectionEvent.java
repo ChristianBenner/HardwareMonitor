@@ -21,43 +21,22 @@
  * =====================================================================================================================
  */
 
-package com.bennero.server.message;
+package com.bennero.server.network;
 
-import com.bennero.common.messages.RemoveSensorDataPositions;
+import javafx.event.Event;
 
-/**
- * RemoveSensorMessage stores the data of a sensor removal request. The message is sent by a connected client only. The
- * message must include the page that the sensor is to be removed from.
- *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
- */
-public class RemoveSensorMessage
+public class ConnectionEvent extends Event
 {
-    private byte sensorId;
-    private byte pageId;
+    private String networkSSID;
 
-    private RemoveSensorMessage(byte sensorId, byte pageId)
+    public ConnectionEvent(String networkSSID)
     {
-        this.sensorId = sensorId;
-        this.pageId = pageId;
+        super(networkSSID, null, null);
+        this.networkSSID = networkSSID;
     }
 
-    public static RemoveSensorMessage processRemoveSensorMessage(byte[] bytes)
+    public String getNetworkSSID()
     {
-        final int sensorId = bytes[RemoveSensorDataPositions.SENSOR_ID_POS] & 0xFF;
-        final int pageId = bytes[RemoveSensorDataPositions.PAGE_ID_POS] & 0xFF;
-        return new RemoveSensorMessage((byte) sensorId, (byte) pageId);
-    }
-
-    public byte getSensorId()
-    {
-        return sensorId;
-    }
-
-    public byte getPageId()
-    {
-        return pageId;
+        return networkSSID;
     }
 }

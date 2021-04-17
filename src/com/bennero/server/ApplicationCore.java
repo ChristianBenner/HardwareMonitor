@@ -24,11 +24,11 @@
 package com.bennero.server;
 
 import com.bennero.common.*;
-import com.bennero.logging.LogLevel;
-import com.bennero.logging.Logger;
-import com.bennero.networking.AddressInformation;
-import com.bennero.networking.NetworkUtils;
-import com.bennero.osspecific.OSUtils;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
+import com.bennero.common.networking.AddressInformation;
+import com.bennero.common.networking.NetworkUtils;
+import com.bennero.common.osspecific.OSUtils;
 import com.bennero.server.event.*;
 import com.bennero.server.network.Server;
 import com.bennero.server.pages.*;
@@ -76,6 +76,11 @@ public class ApplicationCore extends Application
     private Thread pageRollerThread;
     private Server server;
     private PageRoller pageRoller;
+
+    public List<CustomisableSensorPage> getCustomisableSensorPageList()
+    {
+        return customisableSensorPageList;
+    }
 
     private void displayNetworkSelectionPage()
     {
@@ -437,127 +442,4 @@ public class ApplicationCore extends Application
         stage.show();
     }
 
-    class PageRoller implements Runnable
-    {
-        private List<CustomisableSensorPage> customisableSensorPages;
-        private CustomisableSensorPage currentCustomisableSensorPage;
-        private CustomisableSensorPage previousCustomisableSensorPage;
-
-        private long pageViewStartTimeMs = 0;
-        private ApplicationCore applicationCore;
-
-        public PageRoller(ApplicationCore applicationCore)
-        {
-            this.applicationCore = applicationCore;
-            this.customisableSensorPages = new ArrayList<>();
-            this.currentCustomisableSensorPage = null;
-        }
-
-        public void addPage(CustomisableSensorPage customisableSensorPage)
-        {
-            this.customisableSensorPages.add(customisableSensorPage);
-        }
-
-        public void removePage(byte pageId)
-        {
-            for (int i = 0; i < customisableSensorPages.size(); i++)
-            {
-                if (customisableSensorPages.get(i).getUniqueId() == pageId)
-                {
-                    applicationCore.removePage(customisableSensorPages.get(i));
-                    customisableSensorPages.remove(i);
-                    break;
-                }
-            }
-
-            if (currentCustomisableSensorPage.getUniqueId() == pageId)
-            {
-                applicationCore.removePage(currentCustomisableSensorPage);
-
-                if (previousCustomisableSensorPage == null)
-                {
-                    applicationCore.displayConnectedPage();
-                    currentCustomisableSensorPage = null;
-                }
-                else
-                {
-                    applicationCore.displayPage(previousCustomisableSensorPage, null);
-                    currentCustomisableSensorPage = previousCustomisableSensorPage;
-                }
-            }
-        }
-
-        public void removeSensor(byte sensorId, byte pageId)
-        {
-            // Find the page
-            boolean found = false;
-            for (int i = 0; i < customisableSensorPageList.size() && !found; i++)
-            {
-                if (customisableSensorPageList.get(i).getUniqueId() == pageId)
-                {
-                    found = true;
-
-                    customisableSensorPageList.get(i).removeSensor(sensorId);
-                }
-            }
-        }
-
-        @Override
-        public void run()
-        {
-            while (true)
-            {
-                if (currentCustomisableSensorPage == null)
-                {
-                    // Find the lowest ID page in the list and set that to the current page
-                    for (int i = 0; i < customisableSensorPages.size(); i++)
-                    {
-                        if (currentCustomisableSensorPage == null || customisableSensorPages.get(i).getUniqueId() < currentCustomisableSensorPage.getUniqueId())
-                        {
-                            currentCustomisableSensorPage = customisableSensorPageList.get(i);
-                            pageViewStartTimeMs = System.currentTimeMillis();
-                        }
-                    }
-
-                    if (currentCustomisableSensorPage != null)
-                    {
-                        Platform.runLater(() -> applicationCore.displayPage(currentCustomisableSensorPage, null));
-                    }
-                }
-                else
-                {
-                    if (currentCustomisableSensorPage.getDurationMs() != 0 && currentCustomisableSensorPage.getNextPageId() != currentCustomisableSensorPage.getUniqueId() &&
-                            pageViewStartTimeMs + currentCustomisableSensorPage.getDurationMs() < System.currentTimeMillis())
-                    {
-                        boolean found = false;
-
-                        // Find page in list
-                        for (int i = 0; i < customisableSensorPages.size() && !found; i++)
-                        {
-                            if (customisableSensorPages.get(i).getUniqueId() == currentCustomisableSensorPage.getNextPageId())
-                            {
-                                found = true;
-
-                                // Show the next page
-                                previousCustomisableSensorPage = currentCustomisableSensorPage;
-                                currentCustomisableSensorPage = customisableSensorPageList.get(i);
-                                pageViewStartTimeMs = System.currentTimeMillis();
-                                System.out.println("Display Page: " + customisableSensorPages.get(i).getTitle());
-                                Platform.runLater(() -> applicationCore.displayPage(currentCustomisableSensorPage, previousCustomisableSensorPage));
-                            }
-                        }
-                    }
-                }
-
-                try
-                {
-                    Thread.sleep(100);
-                }
-                catch (InterruptedException e)
-                {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
 }

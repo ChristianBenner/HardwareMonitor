@@ -24,12 +24,12 @@
 package com.bennero.server.message;
 
 import com.bennero.common.PageData;
-import com.bennero.messages.PageDataPositions;
+import com.bennero.common.messages.PageDataPositions;
 import javafx.scene.paint.Color;
 
 import static com.bennero.common.Constants.NAME_STRING_NUM_BYTES;
-import static com.bennero.networking.NetworkUtils.readInt;
-import static com.bennero.networking.NetworkUtils.readString;
+import static com.bennero.common.networking.NetworkUtils.readInt;
+import static com.bennero.common.networking.NetworkUtils.readString;
 
 /**
  * PageSetupMessage stores the data of a page creation request. The PageSetupMessage is sent by a connected client

@@ -23,8 +23,8 @@
 
 package com.bennero.server.pages;
 
-import com.bennero.networking.NetworkUtils;
-import javafx.event.Event;
+import com.bennero.common.networking.NetworkUtils;
+import com.bennero.server.network.ConnectionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -50,17 +50,11 @@ public class NetworkSelectionPane extends BorderPane
     private Button refreshButton;
     private Button selectButton;
     private boolean showPassword;
-    private EventHandler<ConnectionEvent> connectingEvent;
-    private EventHandler connectedEvent;
-    private EventHandler<ConnectionEvent> failedConnectionEvent;
+
     public NetworkSelectionPane(EventHandler<ConnectionEvent> connectingEvent,
                                 EventHandler connectedEvent,
                                 EventHandler<ConnectionEvent> failedConnectionEvent)
     {
-        this.connectingEvent = connectingEvent;
-        this.connectedEvent = connectedEvent;
-        this.failedConnectionEvent = failedConnectionEvent;
-
         super.setPadding(new Insets(10));
         showPassword = false;
 
@@ -224,21 +218,5 @@ public class NetworkSelectionPane extends BorderPane
 
         super.setId("standard-pane");
         title.setId("pane-title");
-    }
-
-    public class ConnectionEvent extends Event
-    {
-        private String networkSSID;
-
-        public ConnectionEvent(String networkSSID)
-        {
-            super(networkSSID, null, null);
-            this.networkSSID = networkSSID;
-        }
-
-        public String getNetworkSSID()
-        {
-            return networkSSID;
-        }
     }
 }

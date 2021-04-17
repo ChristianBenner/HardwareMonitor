@@ -23,7 +23,7 @@
 
 package com.bennero.server.pages;
 
-import com.bennero.logging.Logger;
+import com.bennero.common.logging.Logger;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.scene.control.TextArea;

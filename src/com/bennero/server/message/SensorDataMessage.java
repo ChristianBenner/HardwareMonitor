@@ -23,9 +23,9 @@
 
 package com.bennero.server.message;
 
-import com.bennero.messages.SensorValueDataPositions;
+import com.bennero.common.messages.SensorValueDataPositions;
 
-import static com.bennero.networking.NetworkUtils.readFloat;
+import static com.bennero.common.networking.NetworkUtils.readFloat;
 
 /**
  * SensorDataMessage stores the data of a sensor update. It is not page dependent (any time the sensor with the given ID
