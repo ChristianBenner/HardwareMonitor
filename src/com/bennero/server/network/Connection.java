@@ -25,9 +25,9 @@ package com.bennero.server.network;
 
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
-import com.bennero.common.networking.NetworkUtils;
 import com.bennero.common.messages.ConnectionRequestReplyDataPositions;
 import com.bennero.common.messages.MessageType;
+import com.bennero.common.networking.NetworkUtils;
 import com.bennero.server.SynchronizedConnection;
 import com.bennero.server.Version;
 import com.bennero.server.event.*;

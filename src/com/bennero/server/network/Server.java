@@ -23,9 +23,9 @@
 
 package com.bennero.server.network;
 
-import com.bennero.common.networking.AddressInformation;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
+import com.bennero.common.networking.AddressInformation;
 import com.bennero.server.SynchronizedConnection;
 import com.bennero.server.event.*;
 import javafx.event.Event;

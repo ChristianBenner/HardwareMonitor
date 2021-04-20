@@ -23,13 +23,13 @@
 
 package com.bennero.server.network;
 
-import com.bennero.common.networking.AddressInformation;
 import com.bennero.common.Constants;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import com.bennero.common.messages.BroadcastAnnouncementDataPositions;
 import com.bennero.common.messages.BroadcastReplyDataPositions;
 import com.bennero.common.messages.MessageType;
+import com.bennero.common.networking.AddressInformation;
 import com.bennero.server.message.BroadcastMessage;
 
 import java.io.IOException;

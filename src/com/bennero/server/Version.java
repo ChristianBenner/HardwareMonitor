@@ -37,9 +37,9 @@ package com.bennero.server;
  */
 public class Version
 {
-    public static final byte VERSION_MAJOR = 0;
-    public static final byte VERSION_MINOR = 8;
-    public static final byte VERSION_PATCH = 1;
+    public static final byte VERSION_MAJOR = 1;
+    public static final byte VERSION_MINOR = 0;
+    public static final byte VERSION_PATCH = 0;
 
     public static String getVersionString()
     {

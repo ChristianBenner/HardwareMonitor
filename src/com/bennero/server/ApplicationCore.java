@@ -23,7 +23,9 @@
 
 package com.bennero.server;
 
-import com.bennero.common.*;
+import com.bennero.common.PageData;
+import com.bennero.common.Sensor;
+import com.bennero.common.TransitionType;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import com.bennero.common.networking.AddressInformation;

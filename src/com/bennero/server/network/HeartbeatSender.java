@@ -25,10 +25,10 @@ package com.bennero.server.network;
 
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.MessageType;
 import com.bennero.common.networking.NetworkUtils;
 import com.bennero.common.osspecific.OSUtils;
 import com.bennero.common.osspecific.RaspberryPiScreenUtils;
-import com.bennero.common.messages.MessageType;
 import com.bennero.server.SynchronizedConnection;
 
 import java.io.IOException;

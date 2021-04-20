@@ -23,8 +23,8 @@
 
 package com.bennero.server.message;
 
-import com.bennero.common.networking.NetworkUtils;
 import com.bennero.common.messages.BroadcastAnnouncementDataPositions;
+import com.bennero.common.networking.NetworkUtils;
 
 import static com.bennero.common.Constants.HW_EDITOR_SYSTEM_UNIQUE_CONNECTION_ID;
 import static com.bennero.common.Constants.IP4_ADDRESS_NUM_BYTES;
