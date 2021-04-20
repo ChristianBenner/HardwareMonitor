@@ -373,7 +373,7 @@ public class ApplicationCore extends Application
     @Override
     public void start(Stage stage)
     {
-        boolean debugTerminal = true;
+        boolean debugTerminal = false;
         boolean windowed = false;
 
         // Process parameters
