@@ -584,6 +584,7 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
     @Override
     public void removeSensor(Sensor sensor)
     {
+        sensorPane.getChildren().remove(sensor);
         pageData.removeSensor(sensor);
         placedSensors.remove(sensor);
         initGrid();

@@ -70,7 +70,6 @@ public class ApplicationCore extends Application
     public static final int WINDOW_WIDTH_PX = 800;
     public static final int WINDOW_HEIGHT_PX = 480;
 
-    private List<CustomisableSensorPage> customisableSensorPageList = new ArrayList<>();
     private List<Sensor> sensorList = new ArrayList<>();
     private StackPane mainPane;
 
@@ -78,11 +77,6 @@ public class ApplicationCore extends Application
     private Thread pageRollerThread;
     private Server server;
     private PageRoller pageRoller;
-
-    public List<CustomisableSensorPage> getCustomisableSensorPageList()
-    {
-        return customisableSensorPageList;
-    }
 
     private void displayNetworkSelectionPage()
     {
@@ -258,26 +252,13 @@ public class ApplicationCore extends Application
     {
         Platform.runLater(() ->
         {
-            boolean exists = false;
-            // See if the page already exists in the list by checking its ID
-            for (int i = 0; i < customisableSensorPageList.size() && !exists; i++)
-            {
-                if (customisableSensorPageList.get(i).getPageData().getUniqueId() == pageMessageEvent.getPageData().getUniqueId())
-                {
-                    Logger.log(LogLevel.DEBUG, CLASS_NAME, "Updating existing page");
+            boolean exists = pageRoller.updatePage(pageMessageEvent.getPageData());
 
-                    exists = true;
-                    customisableSensorPageList.get(i).updatePageData(pageMessageEvent.getPageData());
-                }
-            }
-
-            if (!exists)
+            if(!exists)
             {
                 Logger.log(LogLevel.INFO, CLASS_NAME, "Received new page");
                 PageData pdRcv = pageMessageEvent.getPageData();
                 CustomisableSensorPage pgRcv = new CustomisableSensorPage(pdRcv);
-                customisableSensorPageList.add(pgRcv);
-
                 pageRoller.addPage(pgRcv);
             }
         });
@@ -288,17 +269,7 @@ public class ApplicationCore extends Application
         Platform.runLater(() ->
         {
             sensorList.add(sensorMessageEvent.getSensor());
-
-            // See if the page ID exists in the list of pages
-            for (int i = 0; i < customisableSensorPageList.size(); i++)
-            {
-                if ((byte) customisableSensorPageList.get(i).getUniqueId() == sensorMessageEvent.getPageId())
-                {
-                    // Add sensor to the page
-                    customisableSensorPageList.get(i).addSensor(sensorMessageEvent.getSensor());
-                    break;
-                }
-            }
+            pageRoller.addSensor(sensorMessageEvent.getPageId(), sensorMessageEvent.getSensor());
         });
     }
 
@@ -306,14 +277,6 @@ public class ApplicationCore extends Application
     {
         Platform.runLater(() ->
         {
-            for (int i = 0; i < customisableSensorPageList.size(); i++)
-            {
-                if (customisableSensorPageList.get(i).getUniqueId() == removePageEvent.getPageId())
-                {
-                    customisableSensorPageList.remove(i);
-                }
-            }
-
             pageRoller.removePage(removePageEvent.getPageId());
         });
     }
