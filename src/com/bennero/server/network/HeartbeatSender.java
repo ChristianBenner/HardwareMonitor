@@ -140,12 +140,13 @@ class HeartbeatSender implements Runnable
             {
                 if (connectionLostCounterEnabled)
                 {
-                    System.out.println("Seconds since connection lost: " + secondsConnectionLost);
+                    Logger.log(LogLevel.DEBUG, TAG, "Seconds since connection lost: " + secondsConnectionLost);
                     secondsConnectionLost++;
 
                     // If we are on a Raspberry Pi OS and the screen is on, turn it off
-                    if (secondsConnectionLost > SCREEN_TIME_OUT_SECONDS_RASPBERRY_PI_OS && OSUtils.getOperatingSystem() ==
-                            OSUtils.OperatingSystem.RASPBERRY_PI && RaspberryPiScreenUtils.isDisplayEnabled())
+                    if (secondsConnectionLost > SCREEN_TIME_OUT_SECONDS_RASPBERRY_PI_OS &&
+                            OSUtils.getOperatingSystem() == OSUtils.OperatingSystem.RASPBERRY_PI &&
+                            RaspberryPiScreenUtils.isDisplayEnabled())
                     {
                         RaspberryPiScreenUtils.setDisplayEnabled(false);
                     }

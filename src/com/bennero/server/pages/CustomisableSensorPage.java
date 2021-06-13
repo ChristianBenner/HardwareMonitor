@@ -604,6 +604,35 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
         }
     }
 
+    public void transformSensor(byte sensorId,
+                                byte row,
+                                byte column,
+                                byte rowSpan,
+                                byte columnSpan)
+    {
+        // Find sensor in the list
+        boolean found = false;
+        for (int i = 0; i < placedSensors.size() && !found; i++)
+        {
+            if (placedSensors.get(i).getUniqueId() == sensorId)
+            {
+                found = true;
+
+                Sensor sensor = placedSensors.get(i);
+                sensor.setPosition(row, column);
+                sensor.setRowSpan(rowSpan);
+                sensor.setColumnSpan(columnSpan);
+
+                sensorPane.getChildren().remove(sensor);
+                GridPane.setRowIndex(sensor, (int)row);
+                GridPane.setColumnIndex(sensor, (int)column);
+                GridPane.setRowSpan(sensor, (int)rowSpan);
+                GridPane.setColumnSpan(sensor, (int)columnSpan);
+                sensorPane.getChildren().add(sensor);
+            }
+        }
+    }
+
     @Override
     public boolean containsSensor(Sensor sensor)
     {

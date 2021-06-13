@@ -59,6 +59,7 @@ public class Server implements Runnable
     private EventHandler<SensorDataEvent> sensorDataMessageReceived;
     private EventHandler<RemovePageEvent> removePageMessageReceived;
     private EventHandler<RemoveSensorEvent> removeSensorMessageReceived;
+    private EventHandler<SensorTransformationEvent> sensorTransformationMessageReceived;
 
     private SynchronizedConnection activeConnection;
     private Thread broadcastReplyThread;
@@ -72,7 +73,8 @@ public class Server implements Runnable
                   EventHandler<SensorSetupEvent> sensorMessageReceived,
                   EventHandler<RemovePageEvent> removePageMessageReceived,
                   EventHandler<SensorDataEvent> sensorDataMessageReceived,
-                  EventHandler<RemoveSensorEvent> removeSensorMessageReceived)
+                  EventHandler<RemoveSensorEvent> removeSensorMessageReceived,
+                  EventHandler<SensorTransformationEvent> sensorTransformationMessageReceived)
     {
         this.siteLocalAddressInformation = siteLocalAddressInformation;
         this.connectedEvent = connectedEvent;
@@ -82,6 +84,7 @@ public class Server implements Runnable
         this.removePageMessageReceived = removePageMessageReceived;
         this.sensorDataMessageReceived = sensorDataMessageReceived;
         this.removeSensorMessageReceived = removeSensorMessageReceived;
+        this.sensorTransformationMessageReceived = sensorTransformationMessageReceived;
         activeConnection = new SynchronizedConnection();
     }
 
@@ -113,7 +116,7 @@ public class Server implements Runnable
                 // Disconnect event we should remove the connection from the list (the thread will die automatically)
                 Connection connection = new Connection(activeConnection, socketChannel, connectedEvent,
                         disconnectedEvent, pageMessageReceived, sensorMessageReceived, removePageMessageReceived,
-                        sensorDataMessageReceived, removeSensorMessageReceived);
+                        sensorDataMessageReceived, removeSensorMessageReceived, sensorTransformationMessageReceived);
 
                 Thread thread = new Thread(connection);
                 thread.start();

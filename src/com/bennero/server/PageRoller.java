@@ -135,6 +135,33 @@ class PageRoller implements Runnable
         }
     }
 
+    public void transformSensor(byte sensorId,
+                                byte pageId,
+                                byte row,
+                                byte column,
+                                byte rowSpan,
+                                byte columnSpan)
+    {
+        // Find the page
+        boolean found = false;
+
+        for(int i = 0; i < customisableSensorPages.size() && !found; i++)
+        {
+            if(customisableSensorPages.get(i).getUniqueId() == pageId)
+            {
+                found = true;
+                customisableSensorPages.get(i).transformSensor(sensorId, row, column, rowSpan, columnSpan);
+            }
+        }
+    }
+
+    public void removeAllPages()
+    {
+        customisableSensorPages.clear();
+        currentCustomisableSensorPage = null;
+        previousCustomisableSensorPage = null;
+    }
+
     @Override
     public void run()
     {

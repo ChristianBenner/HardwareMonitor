@@ -245,6 +245,7 @@ public class ApplicationCore extends Application
 
     private void onDisconnect()
     {
+        pageRoller.removeAllPages();
         Platform.runLater(() -> displayWaitingForConnectionPage());
     }
 
@@ -279,6 +280,14 @@ public class ApplicationCore extends Application
         {
             pageRoller.removePage(removePageEvent.getPageId());
         });
+    }
+
+    private void processSensorTransformationEvent(SensorTransformationEvent sensorTransformationEvent)
+    {
+        Platform.runLater(() -> pageRoller.transformSensor(sensorTransformationEvent.getSensorId(),
+                sensorTransformationEvent.getPageId(), sensorTransformationEvent.getRow(),
+                sensorTransformationEvent.getColumn(), sensorTransformationEvent.getRowSpan(),
+                sensorTransformationEvent.getColumnSpan()));
     }
 
     private void processSensorDataEvent(SensorDataEvent sensorDataEvent)
@@ -322,7 +331,8 @@ public class ApplicationCore extends Application
                     sensorMessageEvent -> processSensorMessageEvent(sensorMessageEvent),
                     removePageEvent -> processRemovePageEvent(removePageEvent),
                     sensorDataEvent -> processSensorDataEvent(sensorDataEvent),
-                    removeSensorEvent -> processRemoveSensorEvent(removeSensorEvent));
+                    removeSensorEvent -> processRemoveSensorEvent(removeSensorEvent),
+                    sensorTransformationEvent -> processSensorTransformationEvent(sensorTransformationEvent));
 
             serverThread = new Thread(server);
             serverThread.start();

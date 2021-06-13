@@ -21,28 +21,58 @@
  * =====================================================================================================================
  */
 
-package com.bennero.server;
+package com.bennero.server.event;
+
+import com.bennero.server.message.SensorTransformationMessage;
+import javafx.event.Event;
 
 /**
- * Specifies the version of the hardware monitor software. Comprised of major, minor and patch versions.
- * Major: A major release marks a milestone according to design and requirements
- * Minor: Addition of one or more design components/requirements. A minor version change should also be done if any
- * network messages have been altered as this effects compatibility with hardware monitor editor.
- * Patch: Small changes such as bug fixes or minor feature implementations. Any network message changes should be minor
- * not patch as it signifies incompatibility with hardware monitor editors that do not have the network message change.
+ * SensorTransformationEvent creates an event that is used to provide a SensorTransformationMessage object back to a
+ * listener through an EventHandler
  *
+ * @see         SensorTransformationMessage
+ * @see         Event
  * @author      Christian Benner
  * @version     %I%, %G%
  * @since       1.0
  */
-public class Version
+public class SensorTransformationEvent extends Event
 {
-    public static final byte VERSION_MAJOR = 1;
-    public static final byte VERSION_MINOR = 3;
-    public static final byte VERSION_PATCH = 0;
+    private final SensorTransformationMessage sensorTransformationMessage;
 
-    public static String getVersionString()
+    public SensorTransformationEvent(final SensorTransformationMessage sensorTransformationMessage)
     {
-        return "v" + VERSION_MAJOR + "." + VERSION_MINOR + "." + VERSION_PATCH;
+        super(sensorTransformationMessage, null, null);
+        this.sensorTransformationMessage = sensorTransformationMessage;
+    }
+
+    public byte getSensorId()
+    {
+        return sensorTransformationMessage.getSensorId();
+    }
+
+    public byte getPageId()
+    {
+        return sensorTransformationMessage.getPageId();
+    }
+
+    public byte getRow()
+    {
+        return sensorTransformationMessage.getRow();
+    }
+
+    public byte getColumn()
+    {
+        return sensorTransformationMessage.getColumn();
+    }
+
+    public byte getRowSpan()
+    {
+        return sensorTransformationMessage.getRowSpan();
+    }
+
+    public byte getColumnSpan()
+    {
+        return sensorTransformationMessage.getColumnSpan();
     }
 }

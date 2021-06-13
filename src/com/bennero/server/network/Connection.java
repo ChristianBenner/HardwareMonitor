@@ -70,6 +70,7 @@ public class Connection implements Runnable
     private EventHandler<SensorDataEvent> sensorDataMessageReceived;
     private EventHandler<RemovePageEvent> removePageMessageReceived;
     private EventHandler<RemoveSensorEvent> removeSensorMessageReceived;
+    private EventHandler<SensorTransformationEvent> sensorTransformationMessageReceived;
 
     private Boolean connected;
     private volatile String clientHostname;
@@ -82,7 +83,8 @@ public class Connection implements Runnable
                       EventHandler<SensorSetupEvent> sensorMessageReceived,
                       EventHandler<RemovePageEvent> removePageMessageReceived,
                       EventHandler<SensorDataEvent> sensorDataMessageReceived,
-                      EventHandler<RemoveSensorEvent> removeSensorMessageReceived)
+                      EventHandler<RemoveSensorEvent> removeSensorMessageReceived,
+                      EventHandler<SensorTransformationEvent> sensorTransformationMessageReceived)
     {
         this.connection = connection;
         this.socketChannel = socketChannel;
@@ -93,6 +95,7 @@ public class Connection implements Runnable
         this.removePageMessageReceived = removePageMessageReceived;
         this.sensorDataMessageReceived = sensorDataMessageReceived;
         this.removeSensorMessageReceived = removeSensorMessageReceived;
+        this.sensorTransformationMessageReceived = sensorTransformationMessageReceived;
         connected = false;
 
         clientHostname = "Not specified";
@@ -160,7 +163,7 @@ public class Connection implements Runnable
         switch (bytes[MESSAGE_TYPE_POS])
         {
             case MessageType.DATA:
-                System.out.println("Received hardware data message");
+                //System.out.println("Received hardware data message");
                 sensorDataMessageReceived.handle(new SensorDataEvent(SensorDataMessage.processSensorDataMessage(bytes)));
                 break;
             case MessageType.PAGE_SETUP:
@@ -178,6 +181,10 @@ public class Connection implements Runnable
             case MessageType.REMOVE_SENSOR:
                 System.out.println("Received remove sensor message");
                 removeSensorMessageReceived.handle(new RemoveSensorEvent(RemoveSensorMessage.processRemoveSensorMessage(bytes)));
+                break;
+            case MessageType.SENSOR_TRANSFORMATION_MESSAGE:
+                System.out.println("Received sensor transformation message");
+                sensorTransformationMessageReceived.handle(new SensorTransformationEvent(SensorTransformationMessage.processSensorTransformationMessage(bytes)));
                 break;
             case MessageType.CONNECTION_REQUEST_MESSAGE:
                 ConnectionRequestMessage message = processConnectionRequestMessageData(bytes);
