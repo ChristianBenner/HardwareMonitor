@@ -187,70 +187,89 @@ public class Connection implements Runnable
                 sensorTransformationMessageReceived.handle(new SensorTransformationEvent(SensorTransformationMessage.processSensorTransformationMessage(bytes)));
                 break;
             case MessageType.CONNECTION_REQUEST_MESSAGE:
-                ConnectionRequestMessage message = processConnectionRequestMessageData(bytes);
-
-                // We now know the clients hostname so store this information
-                setClientHostname(message.getHostname());
-
-                // Announce connection request
-                System.out.println("Received connection request message from '" + message.getHostname() + "' v(" +
-                        message.getMajorVersion() + "." + message.getMinorVersion() + "." + message.getPatchVersion() +
-                        ")");
-
-                // Is the version compatible
-                boolean versionMismatch = isVersionCompatible(VERSION_MAJOR, VERSION_MINOR, message.getMajorVersion(),
-                        message.getMinorVersion()) != NetworkUtils.Compatibility.COMPATIBLE;
-                boolean currentlyInUse = connection.isConnectionActive() && !message.isForceConnection();
-
-                // Should we accept the connection or not
-                final boolean acceptConnection = !versionMismatch && !currentlyInUse;
-
-                if (acceptConnection)
-                {
-                    sendConnectionRequestReplyMessage(true, false, false);
-
-                    Logger.log(LogLevel.INFO, TAG, "Accepted connection request message from '" + message.
-                            getHostname() + "' v(" + message.getMajorVersion() + "." + message.getMinorVersion() + "." +
-                            message.getPatchVersion() + ")");
-                    connection.setConnection(this);
-                }
-                else
-                {
-                    if (versionMismatch)
-                    {
-                        sendConnectionRequestReplyMessage(false, true, currentlyInUse);
-
-                        Logger.log(LogLevel.WARNING, TAG, "Rejected connection request message from '" +
-                                message.getHostname() + "' v(" + message.getMajorVersion() + "." + message.
-                                getMinorVersion() + "." + message.getPatchVersion() + ") because the client version " +
-                                "is not compatible with the monitor version (" + Version.getVersionString() + ")");
-                    }
-                    else if (currentlyInUse)
-                    {
-                        sendConnectionRequestReplyMessage(false, false, true,
-                                connection.getClientHostname());
-
-                        Logger.log(LogLevel.WARNING, TAG, "Rejected connection request message from '" +
-                                message.getHostname() + "' v(" + message.getMajorVersion() + "." + message.
-                                getMinorVersion() + "." + message.getPatchVersion() + ") because the monitor is " +
-                                "currently in use by '" + connection.getClientHostname() + "'");
-                    }
-
-                    // Try to close the socket channel, ending the connection with the client and making the threads
-                    // life come to an end
-                    try
-                    {
-                        socketChannel.close();
-                    }
-                    catch (IOException e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
+                handleConnectionRequest(processConnectionRequestMessageData(bytes));
+                break;
+            case MessageType.DISCONNECT_MESSAGE:
+                System.out.println("Received disconnect message");
+                handleDisconnect();
                 break;
             default:
                 System.out.println("Received Unrecognised Message Type: " + (int) bytes[MESSAGE_TYPE_POS]);
                 break;
+        }
+    }
+
+    private void handleConnectionRequest(ConnectionRequestMessage message)
+    {
+        // We now know the clients hostname so store this information
+        setClientHostname(message.getHostname());
+
+        // Announce connection request
+        System.out.println("Received connection request message from '" + message.getHostname() + "' v(" +
+                message.getMajorVersion() + "." + message.getMinorVersion() + "." + message.getPatchVersion() +
+                ")");
+
+        // Is the version compatible
+        boolean versionMismatch = isVersionCompatible(VERSION_MAJOR, VERSION_MINOR, message.getMajorVersion(),
+                message.getMinorVersion()) != NetworkUtils.Compatibility.COMPATIBLE;
+        boolean currentlyInUse = connection.isConnectionActive() && !message.isForceConnection();
+
+        // Should we accept the connection or not
+        final boolean acceptConnection = !versionMismatch && !currentlyInUse;
+
+        if (acceptConnection)
+        {
+            sendConnectionRequestReplyMessage(true, false, false);
+
+            Logger.log(LogLevel.INFO, TAG, "Accepted connection request message from '" + message.
+                    getHostname() + "' v(" + message.getMajorVersion() + "." + message.getMinorVersion() + "." +
+                    message.getPatchVersion() + ")");
+            connection.setConnection(this);
+        }
+        else
+        {
+            if (versionMismatch)
+            {
+                sendConnectionRequestReplyMessage(false, true, currentlyInUse);
+
+                Logger.log(LogLevel.WARNING, TAG, "Rejected connection request message from '" +
+                        message.getHostname() + "' v(" + message.getMajorVersion() + "." + message.
+                        getMinorVersion() + "." + message.getPatchVersion() + ") because the client version " +
+                        "is not compatible with the monitor version (" + Version.getVersionString() + ")");
+            }
+            else if (currentlyInUse)
+            {
+                sendConnectionRequestReplyMessage(false, false, true,
+                        connection.getClientHostname());
+
+                Logger.log(LogLevel.WARNING, TAG, "Rejected connection request message from '" +
+                        message.getHostname() + "' v(" + message.getMajorVersion() + "." + message.
+                        getMinorVersion() + "." + message.getPatchVersion() + ") because the monitor is " +
+                        "currently in use by '" + connection.getClientHostname() + "'");
+            }
+
+            // Try to close the socket channel, ending the connection with the client and making the threads
+            // life come to an end
+            try
+            {
+                socketChannel.close();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void handleDisconnect()
+    {
+        try
+        {
+            socketChannel.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
         }
     }
 
