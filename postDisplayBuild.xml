@@ -1,0 +1,94 @@
+<!--
+  ~ ============================================ GNU GENERAL PUBLIC LICENSE =============================================
+  ~ Hardware Monitor for the remote monitoring of a systems hardware information
+  ~ Copyright (C) 2021  Christian Benner
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+  ~ License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+  ~ version.
+  ~
+  ~ Additional terms included with this license are to:
+  ~ - Preserve legal notices and author attributions such as this one. Do not remove the original author license notices
+  ~   from the program
+  ~ - Preserve the donation button and its link to the original authors donation page (christianbenner35@gmail.com)
+  ~ - Only break the terms if given permission from the original author christianbenner35@gmail.com
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program. If not, see
+  ~ <https://www.gnu.org/licenses/>.
+  ~ =====================================================================================================================
+  -->
+
+<project name="PostDisplayBuildProcess" basedir=".">
+    <property name="launch4j.dir" location="C:\Program Files (x86)\Launch4j"/>
+    <taskdef name="launch4j"
+             classname="net.sf.launch4j.ant.Launch4jTask"
+             classpath="${launch4j.dir}/launch4j.jar
+                 :${launch4j.dir}/lib/xstream.jar" />
+
+
+    <target name="buildReleases">
+        <!-- Prompt for a version to be entered so it can be used to structure the release area -->
+        <input message="Enter version for the release (format: x.x.x): " addproperty="version.name"/>
+        <echo message="Version entered: ${version.name}"/>
+
+        <!-- Copy the JAR application to the Releases binaries folder as some users may just want a JAR -->
+        <exec dir="${basedir}" executable="cmd">
+            <arg value="/c"/>
+            <!-- Script to run -->
+            <arg value="deployScript.bat"/>
+            <!-- File to copy -->
+            <arg value="out\artifacts\HardwareMonitorDisplay\HardwareMonitorDisplay.jar"/>
+            <!-- Output dir -->
+            <arg value="Releases\${version.name}\Binaries"/>
+        </exec>
+
+
+        <!-- Generate a custom JRE with jLink so that Launch4j can package the EXE with it -->
+        <exec dir="${basedir}" executable="cmd">
+            <arg value="/c"/>
+            <arg value="buildJre.bat"/>
+            <!-- The JRE deploy location -->
+            <arg value="Releases\${version.name}\Binaries\jre"/>
+            <!-- Optional location for jLink -->
+            <!-- <arg value="C:\Program Files\Java\jdk-14.0.1\bin\jlink"/> -->
+        </exec>
+
+        <!-- Create an EXE from the JAR artifact using Launch4j -->
+        <!-- For some reason the JRE path does not work relatively, so get its absolute path -->
+        <property name="absolute.path" location="Releases\${version.name}\Binaries\jre"/>
+        <launch4j>
+            <config outfile="Releases\${version.name}\Binaries\HardwareMonitorDisplay.exe"
+                    jarPath="Releases\${version.name}\Binaries\HardwareMonitorDisplay.jar"
+                    icon="hwmicon.ico">
+                <versioninfo fileversion="${version.name}.0"
+                             txtfileversion="${version.name}"
+                             filedescription="Network Driven Hardware Monitor Display"
+                             copyright="Bennero"
+                             productversion="${version.name}.0"
+                             txtproductversion="${version.name}"
+                             productname="HardwareMonitorDisplay"
+                             companyname="Bennero"
+                             internalname="HardwareMonitorDisplay"
+                             originalfilename="HardwareMonitorDisplay.exe"
+                             language="ENGLISH_UK"/>
+                <jre path="${absolute.path}" />
+            </config>
+        </launch4j>
+
+        <!-- Copy the generated EXE from the releases to the installer folder as some users may just want an EXE -->
+        <exec dir="${basedir}" executable="cmd">
+            <arg value="/c"/>
+            <!-- Script to run -->
+            <arg value="deployScript.bat"/>
+            <!-- File to copy -->
+            <arg value="Releases\${version.name}\Binaries\HardwareMonitorDisplay.exe"/>
+            <!-- Output dir -->
+            <arg value="Installer\HardwareMonitorDisplayInstaller\HardwareMonitorDisplayInstaller"/>
+        </exec>
+
+        <!-- Todo: Automate the compilation of the installer/package builders and copy the output to the release directory -->
+    </target>
+</project>
