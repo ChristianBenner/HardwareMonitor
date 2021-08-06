@@ -86,6 +86,22 @@
             <arg value="Installer\HardwareMonitorDisplayInstaller\HardwareMonitorDisplayInstaller"/>
         </exec>
 
-        <!-- Todo: Automate the compilation of the installer/package builders and copy the output to the release directory -->
+        <!-- Build the installer -->
+        <exec dir="${basedir}" executable="cmd">
+            <arg value="/c"/>
+            <arg value="buildInstaller.bat"/>
+            <arg value="Installer\HardwareMonitorDisplayInstaller\HardwareMonitorDisplayInstaller.sln"/>
+        </exec>
+
+        <!-- Copy the installer to the release folder -->
+        <exec dir="${basedir}" executable="cmd">
+            <arg value="/c"/>
+            <!-- Script to run -->
+            <arg value="deployFolderScript.bat"/>
+            <!-- File to copy -->
+            <arg value="Installer\HardwareMonitorDisplayInstaller\deploy\displayinstaller"/>
+            <!-- Output dir -->
+            <arg value="..\Releases\${version.name}\Installers"/>
+        </exec>
     </target>
 </project>
