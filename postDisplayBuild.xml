@@ -42,26 +42,23 @@
             <!-- File to copy -->
             <arg value="out\artifacts\HardwareMonitorDisplay\HardwareMonitorDisplay.jar"/>
             <!-- Output dir -->
-            <arg value="Releases\${version.name}\Binaries"/>
+            <arg value="..\Releases\${version.name}\Binaries"/>
         </exec>
-
 
         <!-- Generate a custom JRE with jLink so that Launch4j can package the EXE with it -->
         <exec dir="${basedir}" executable="cmd">
             <arg value="/c"/>
             <arg value="buildJre.bat"/>
             <!-- The JRE deploy location -->
-            <arg value="Releases\${version.name}\Binaries\jre"/>
-            <!-- Optional location for jLink -->
-            <!-- <arg value="C:\Program Files\Java\jdk-14.0.1\bin\jlink"/> -->
+            <arg value="..\Releases\${version.name}\Binaries\jre"/>
         </exec>
 
         <!-- Create an EXE from the JAR artifact using Launch4j -->
         <!-- For some reason the JRE path does not work relatively, so get its absolute path -->
-        <property name="absolute.path" location="Releases\${version.name}\Binaries\jre"/>
+        <property name="absolute.path" location="..\Releases\${version.name}\Binaries\jre"/>
         <launch4j>
-            <config outfile="Releases\${version.name}\Binaries\HardwareMonitorDisplay.exe"
-                    jarPath="Releases\${version.name}\Binaries\HardwareMonitorDisplay.jar"
+            <config outfile="..\Releases\${version.name}\Binaries\HardwareMonitorDisplay.exe"
+                    jarPath="..\Releases\${version.name}\Binaries\HardwareMonitorDisplay.jar"
                     icon="hwmicon.ico">
                 <versioninfo fileversion="${version.name}.0"
                              txtfileversion="${version.name}"
@@ -84,7 +81,7 @@
             <!-- Script to run -->
             <arg value="deployScript.bat"/>
             <!-- File to copy -->
-            <arg value="Releases\${version.name}\Binaries\HardwareMonitorDisplay.exe"/>
+            <arg value="..\Releases\${version.name}\Binaries\HardwareMonitorDisplay.exe"/>
             <!-- Output dir -->
             <arg value="Installer\HardwareMonitorDisplayInstaller\HardwareMonitorDisplayInstaller"/>
         </exec>

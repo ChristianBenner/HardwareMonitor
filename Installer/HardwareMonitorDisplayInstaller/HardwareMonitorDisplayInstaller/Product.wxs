@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="48E66EDC-7A2C-4E09-9A6D-8E61A3D84F1B" Name="Hardware Monitor Display" Language="1033" Version="1.0.0.0" Manufacturer="Bennero" UpgradeCode="98408cf8-eedd-4633-9f9e-3344fd3f8e1b">
+		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+    <Property Id="INSTALLSHORTCUT" />
+    <Property Id="RUNONSTARTUP" />
+    
+    <!-- Use icon in program list -->
+    <Icon Id="icon.ico" SourceFile="$(var.ProjectDir)\icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+
+    <!-- Display Wix minimal user interface -->
+    <WixVariable Id="WixUIBannerBmp" Value="Images\installer_top-banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="Images\installer_background.bmp" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectDir)\license.rtf" />
+    <UIRef Id="WixUI_Minimal" />
+    
+		<MajorUpgrade DowngradeErrorMessage="A newer version of the Hardware Monitor Display is already installed." />
+    <MediaTemplate EmbedCab="yes"/>
+
+		<Feature Id="ProductFeature" Title="HardwareMonitorDisplayInstaller" Level="1">
+      <!-- Places product components in install folder -->
+			<ComponentGroupRef Id="ProductComponents" />
+
+      <!-- Places shortcuts in there places -->
+      <ComponentRef Id="ApplicationShortcut" />
+      <ComponentRef Id="ApplicationShortcutDesktop" />
+      <ComponentRef Id="RegistryEntries" />
+		</Feature>
+	</Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <!-- Define where the application is going to be installed (in program files) -->
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="COMPANY_FOLDER" Name="Benner">
+          <Directory Id="INSTALLFOLDER" Name="HardwareMonitorDisplay">
+          </Directory>
+        </Directory>
+      </Directory>
+      <!-- Add shortcut to program menu (start menu) -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="Hardware Monitor Display" />
+      </Directory>
+      <!-- Add shortcut to desktop -->
+      <Directory Id="DesktopFolder" Name="Hardware Monitor Display" />
+    </Directory>
+  </Fragment>
+
+
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <!-- Add to system start-up -->
+      <Component Id="RegistryEntries" Guid="FD0F69CB-CBA8-497C-85D5-472A9A9D2593">
+        <!-- Only add run on startup if the condition has been met (checkbox on installer GUI) -->
+        <Condition>RUNONSTARTUP</Condition>
+        <RegistryValue Id="BHWM.rst"
+                       Root="HKMU"
+                       Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+                       Action="write"
+                       Type="string"
+                       Name="Hardware Monitor Display"
+                       Value="[INSTALLFOLDER]HardwareMonitorDisplay.exe"/>
+      </Component>
+    </DirectoryRef>
+
+    <!-- Create shortcut in the application programs folder -->
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="ApplicationShortcut" Guid="5F556211-3ADE-4CB9-B42D-B6EB9636BF2B">
+        <Shortcut Id="ApplicationStartMenuShortcut" Name="Hardware Monitor Display" Description="Hardware Monitor Display" Target="[INSTALLFOLDER]HardwareMonitorDisplay.exe" WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\HardwareMonitorDisplay" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- Create shortcut in the desktop folder -->
+    <DirectoryRef Id="DesktopFolder">
+      <Component Id="ApplicationShortcutDesktop" Guid="10EFAB54-1BA5-40E7-BF6E-8705D7672AB1">
+        <!-- Only add if the install shortcut condition has been met (checkbox on installer GUI) -->
+        <Condition>INSTALLSHORTCUT</Condition>
+        <Shortcut Id="ApplicationDesktopShortcut" Name="Hardware Monitor Display" Description="Hardware Monitor Display" Target="[INSTALLFOLDER]HardwareMonitorDisplay.exe" WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU" Key="Software\HardwareMonitor" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+  
+	<Fragment>
+		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
+			<!-- <Component Id="ProductComponent"> -->
+				<!-- TODO: Insert files, registry keys, and other resources here. -->
+			<!-- </Component> -->
+      <Component Id="HardwareMonitorDisplay.exe" Guid="4AE0D1CA-7288-4275-9BA8-5A06ED5898BE">
+        <File Id="HardwareMonitorDisplay.exe" Name="HardwareMonitorDisplay.exe" Source="HardwareMonitorDisplay.exe" />
+      </Component>
+		</ComponentGroup>
+	</Fragment>
+</Wix>
