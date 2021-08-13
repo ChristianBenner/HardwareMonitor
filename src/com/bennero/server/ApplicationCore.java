@@ -347,7 +347,7 @@ public class ApplicationCore extends Application
     public void start(Stage stage)
     {
         boolean debugTerminal = false;
-        boolean windowed = false;
+        boolean windowed = true;
 
         // Process parameters
         List<String> parameterList = super.getParameters().getRaw();
@@ -362,6 +362,10 @@ public class ApplicationCore extends Application
                 case "-w":
                 case "-windowed":
                     windowed = true;
+                    break;
+                case "-f":
+                case "-fullscreen":
+                    windowed = false;
                     break;
             }
         }
