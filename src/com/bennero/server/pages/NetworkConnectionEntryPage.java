@@ -1,5 +1,6 @@
 package com.bennero.server.pages;
 
+import com.bennero.common.networking.ConnectionAttemptStatus;
 import com.bennero.common.networking.NetworkUtils;
 import com.bennero.server.event.NetworkConnectionEntryEvent;
 import com.bennero.server.network.ConnectionEvent;
@@ -111,14 +112,43 @@ public class NetworkConnectionEntryPage extends BorderPane
 
             try
             {
-                if (NetworkUtils.connectToWifi(networkSsid, PASSWORD))
+                final ConnectionAttemptStatus connectionAttemptStatus = NetworkUtils.connectToWifi(networkSsid,
+                        PASSWORD);
+
+                switch (connectionAttemptStatus)
                 {
-                    connectedEvent.handle(null);
-                }
-                else
-                {
-                    failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
-                            "No connection or incorrect password"));
+                    case SUCCESS:
+                        connectedEvent.handle(null);
+                        break;
+                    case OS_NOT_SUPPORTED:
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                                "Operating system not supported to connect to networks"));
+                        break;
+                    case FAILED_TO_WRITE_NETWORK_DATA_FILE:
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                                "Failed to write to the network data file"));
+                        break;
+                    case NETWORK_DATA_FILE_NOT_FOUND:
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                                "Failed to locate the network data file"));
+                        break;
+                    case FAILED_TO_RECONFIGURE_NETWORK:
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                                "Failed to reconfigure the network"));
+                        break;
+                    case FAILED_TO_CONNECT:
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                                "Failed to connect"));
+                        break;
+                    case INCORRECT_PASSWORD:
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                                "Password entered was incorrect"));
+                        break;
+                    case UNKNOWN:
+                    default:
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                                "Unknown failure"));
+                        break;
                 }
             }
             catch (Exception e)

@@ -163,7 +163,7 @@ public class ApplicationCore extends Application
         InformationPage informationPage = new InformationPage("Connecting", ssid);
         mainPane.getChildren().add(informationPage);
     }
-    
+
     public void displayWaitingForConnectionPage()
     {
         mainPane.getChildren().clear();
@@ -179,7 +179,7 @@ public class ApplicationCore extends Application
             }
             else
             {
-                Logger.log(LogLevel.DEBUG, "ApplicationCore",
+                Logger.log(LogLevel.DEBUG, CLASS_NAME,
                         "Network change option not available on this device");
                 InformationPage informationPage = new InformationPage("Waiting on Connection",
                         "My Hostname: " + InetAddress.getLocalHost().getHostName());
@@ -366,9 +366,14 @@ public class ApplicationCore extends Application
         {
             switch (parameterList.get(i).toLowerCase())
             {
+                case "-l":
+                case "--log":
+                    // Shows the debug terminal
+                    debugTerminal = true;
+                    Logger.setLogLevel(LogLevel.DEBUG);
+                    break;
                 case "-d":
                 case "--debug":
-                    debugTerminal = true;
                     Logger.setLogLevel(LogLevel.DEBUG);
                     break;
                 case "-w":
@@ -414,15 +419,15 @@ public class ApplicationCore extends Application
         }
 
         // Print some information relevant to this machine
-        Logger.log(LogLevel.INFO, "ApplicationCore", "Running Hardware Monitor Server");
-        Logger.log(LogLevel.INFO, "ApplicationCore", "Version: " + Version.getVersionString());
-        Logger.log(LogLevel.INFO, "ApplicationCore", "OperatingSystem: " + OSUtils.getOperatingSystemString());
+        Logger.log(LogLevel.INFO, CLASS_NAME, "Running Hardware Monitor Server");
+        Logger.log(LogLevel.INFO, CLASS_NAME, "Version: " + Version.getVersionString());
+        Logger.log(LogLevel.INFO, CLASS_NAME, "OperatingSystem: " + OSUtils.getOperatingSystemString());
 
         stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
 
         if (!NetworkUtils.isConnected())
         {
-            System.err.println("Not connected to a network, opening connection page");
+            Logger.log(LogLevel.WARNING, CLASS_NAME, "Not connected to a network, opening connection page");
             displayNetworkSelectionPage();
         }
         else
