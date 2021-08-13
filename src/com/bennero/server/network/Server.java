@@ -91,8 +91,6 @@ public class Server implements Runnable
     @Override
     public void run()
     {
-        Logger.setLogLevel(LogLevel.INFO);
-
         broadcastReplyThread = new Thread(new BroadcastReplyThread(siteLocalAddressInformation));
         broadcastReplyThread.start();
 

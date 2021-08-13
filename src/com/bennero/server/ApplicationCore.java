@@ -78,23 +78,59 @@ public class ApplicationCore extends Application
     private Server server;
     private PageRoller pageRoller;
 
+    private void displayNetworkConnectionEntryPage(final String networkSsid, final String previousConnectionError)
+    {
+        mainPane.getChildren().clear();
+        mainPane.getChildren().add(new NetworkConnectionEntryPage(networkSsid, previousConnectionError,
+            event -> // Back button selected event
+            {
+                displayNetworkSelectionPage();
+            },
+            event -> // Connecting event
+            {
+                displayConnectingPage(event.getNetworkSSID());
+            },
+            event -> // Connected event
+            {
+                runServer();
+            },
+            event -> // Failed to connect event
+            {
+                displayNetworkConnectionEntryPage(event.getNetworkSsid(), event.getPreviousConnectionError());
+            }));
+    }
+
+    private void displayNetworkConnectionEntryPage(final String networkSsid)
+    {
+        mainPane.getChildren().clear();
+        mainPane.getChildren().add(new NetworkConnectionEntryPage(networkSsid,
+            event -> // Back button selected event
+            {
+                displayNetworkSelectionPage();
+            },
+            event -> // Connecting event
+            {
+                displayConnectingPage(event.getNetworkSSID());
+            },
+            event -> // Connected event
+            {
+                runServer();
+            },
+            event -> // Failed to connect event
+            {
+                displayNetworkConnectionEntryPage(event.getNetworkSsid(), event.getPreviousConnectionError());
+            }));
+    }
+
     private void displayNetworkSelectionPage()
     {
         mainPane.getChildren().clear();
         mainPane.getChildren().add(new NetworkSelectionPane(
-                event ->
-                {
-                    displayConnectingPage(event.getNetworkSSID());
-                },
-                event ->
-                {
-                    runServer();
-                },
-                event ->
-                {
-                    // Display failed to connect
-                    displayFailedToConnect(event.getNetworkSSID());
-                }));
+            networkConnectionEntryEvent ->
+            {
+                // User has selected an SSID on the network list page, so display the network connection entry page
+                displayNetworkConnectionEntryPage(networkConnectionEntryEvent.getNetworkSsid());
+            }));
     }
 
     public void displayConnectedPage()
@@ -128,35 +164,35 @@ public class ApplicationCore extends Application
         mainPane.getChildren().add(informationPage);
     }
 
-    public void displayFailedToConnect(String ssid)
-    {
-        mainPane.getChildren().clear();
-
-        StackPane pane = new StackPane();
-        pane.setId("standard-pane");
-        VBox slide = new VBox();
-        slide.setSpacing(5.0);
-        Label titleLabel = new Label("Connection Failed");
-        slide.setId("hw-welcome-page-pane");
-        titleLabel.setId("hw-welcome-page-title");
-        slide.setAlignment(Pos.CENTER);
-        slide.getChildren().add(titleLabel);
-
-        Label infoLabel = new Label("Failed to connect to " + ssid + ". Password may be invalid.");
-        infoLabel.setWrapText(true);
-        infoLabel.setTextAlignment(TextAlignment.CENTER);
-        infoLabel.setId("hw-welcome-page-subtitle");
-        slide.getChildren().add(infoLabel);
-
-        Button button = new Button("Retry");
-        button.setId("hw-default-button");
-        slide.getChildren().add(button);
-
-        StackPane.setAlignment(slide, Pos.CENTER);
-        pane.getChildren().add(slide);
-
-        mainPane.getChildren().add(pane);
-    }
+//    public void displayFailedToConnect(String ssid)
+//    {
+//        mainPane.getChildren().clear();
+//
+//        StackPane pane = new StackPane();
+//        pane.setId("standard-pane");
+//        VBox slide = new VBox();
+//        slide.setSpacing(5.0);
+//        Label titleLabel = new Label("Connection Failed");
+//        slide.setId("hw-welcome-page-pane");
+//        titleLabel.setId("hw-welcome-page-title");
+//        slide.setAlignment(Pos.CENTER);
+//        slide.getChildren().add(titleLabel);
+//
+//        Label infoLabel = new Label("Failed to connect to " + ssid + ". Password may be invalid.");
+//        infoLabel.setWrapText(true);
+//        infoLabel.setTextAlignment(TextAlignment.CENTER);
+//        infoLabel.setId("hw-welcome-page-subtitle");
+//        slide.getChildren().add(infoLabel);
+//
+//        Button button = new Button("Retry");
+//        button.setId("hw-default-button");
+//        slide.getChildren().add(button);
+//
+//        StackPane.setAlignment(slide, Pos.CENTER);
+//        pane.getChildren().add(slide);
+//
+//        mainPane.getChildren().add(pane);
+//    }
 
     public void displayWaitingForConnectionPage()
     {
@@ -164,16 +200,21 @@ public class ApplicationCore extends Application
 
         try
         {
-            InformationButtonPage informationPage = new InformationButtonPage("Waiting on Connection", "My Hostname: " +
-                    InetAddress.getLocalHost().getHostName(), "Change Network", new EventHandler<>()
+            if(NetworkUtils.isNetworkChangeSupported())
             {
-                @Override
-                public void handle(Event event)
-                {
-                    displayNetworkSelectionPage();
-                }
-            });
-            mainPane.getChildren().add(informationPage);
+                InformationButtonPage informationPage = new InformationButtonPage("Waiting on Connection",
+                        "My Hostname: " + InetAddress.getLocalHost().getHostName(), "Change Network",
+                        (EventHandler<Event>) event -> displayNetworkSelectionPage());
+                mainPane.getChildren().add(informationPage);
+            }
+            else
+            {
+                Logger.log(LogLevel.DEBUG, "ApplicationCore",
+                        "Network change option not available on this device");
+                InformationPage informationPage = new InformationPage("Waiting on Connection",
+                        "My Hostname: " + InetAddress.getLocalHost().getHostName());
+                mainPane.getChildren().add(informationPage);
+            }
         }
         catch (UnknownHostException e)
         {
@@ -356,15 +397,16 @@ public class ApplicationCore extends Application
             switch (parameterList.get(i).toLowerCase())
             {
                 case "-d":
-                case "-debug":
+                case "--debug":
                     debugTerminal = true;
+                    Logger.setLogLevel(LogLevel.DEBUG);
                     break;
                 case "-w":
-                case "-windowed":
+                case "--windowed":
                     windowed = true;
                     break;
                 case "-f":
-                case "-fullscreen":
+                case "--fullscreen":
                     windowed = false;
                     break;
             }

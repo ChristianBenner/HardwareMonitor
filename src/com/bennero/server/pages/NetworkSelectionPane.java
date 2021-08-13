@@ -24,6 +24,9 @@
 package com.bennero.server.pages;
 
 import com.bennero.common.networking.NetworkUtils;
+import com.bennero.server.event.NetworkConnectionEntryEvent;
+import com.bennero.server.event.PageSetupEvent;
+import com.bennero.server.message.PageSetupMessage;
 import com.bennero.server.network.ConnectionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -45,18 +48,17 @@ import javafx.scene.layout.VBox;
  */
 public class NetworkSelectionPane extends BorderPane
 {
+    private final EventHandler<NetworkConnectionEntryEvent> networkConnectionEntryEventHandler;
     private BorderPane sensorOverview;
     private ListView<String> ssidListView;
     private Button refreshButton;
     private Button selectButton;
-    private boolean showPassword;
 
-    public NetworkSelectionPane(EventHandler<ConnectionEvent> connectingEvent,
-                                EventHandler connectedEvent,
-                                EventHandler<ConnectionEvent> failedConnectionEvent)
+    public NetworkSelectionPane(final EventHandler<NetworkConnectionEntryEvent> networkConnectionEntryEventHandler)
     {
+        this.networkConnectionEntryEventHandler = networkConnectionEntryEventHandler;
+
         super.setPadding(new Insets(10));
-        showPassword = false;
 
         sensorOverview = new BorderPane();
         ssidListView = new ListView<>();
@@ -97,111 +99,10 @@ public class NetworkSelectionPane extends BorderPane
 
         selectButton.setOnMouseClicked(mouseEvent ->
         {
-            if (ssidListView.getSelectionModel().getSelectedItem() != null)
+            final String selectedSsid = ssidListView.getSelectionModel().getSelectedItem();
+            if (selectedSsid != null && !selectedSsid.isEmpty())
             {
-                BorderPane enterPasswordPane = new BorderPane();
-                BorderPane passwordFooterPane = new BorderPane();
-
-                Button backButton = new Button("Back");
-                backButton.setId("hw-default-button");
-                passwordFooterPane.setLeft(backButton);
-                backButton.setOnAction(actionEvent ->
-                {
-                    getChildren().clear();
-                    setCenter(sensorOverview);
-                });
-
-                Button enterPasswordButton = new Button("Connect");
-                enterPasswordButton.setId("hw-default-button");
-                passwordFooterPane.setRight(enterPasswordButton);
-                enterPasswordPane.setBottom(passwordFooterPane);
-
-                VBox slide = new VBox();
-                slide.setId("hw-welcome-page-pane");
-                slide.setSpacing(5.0);
-
-                Label infoLabel = new Label("Connect to " + ssidListView.getSelectionModel().getSelectedItem());
-                infoLabel.setId("hw-welcome-page-subtitle");
-
-                HBox passwordEntryBox = new HBox();
-                passwordEntryBox.setAlignment(Pos.CENTER);
-                passwordEntryBox.setSpacing(5.0);
-
-                Label passwordLabel = new Label("Password: ");
-                passwordLabel.setId("hw-welcome-page-subtitle");
-
-                HBox passwordPane = new HBox();
-                passwordPane.setAlignment(Pos.CENTER);
-
-                PasswordField passwordField = new PasswordField();
-                passwordField.setId("hw-text-field");
-
-                TextField passwordTextField = new TextField();
-                passwordTextField.setId("hw-text-field");
-
-                enterPasswordButton.setOnAction(actionEvent ->
-                {
-                    final String SELECTED_SSID = ssidListView.getSelectionModel().getSelectedItem();
-                    final String PASSWORD = showPassword ? passwordTextField.getText() : passwordField.getText();
-
-                    connectingEvent.handle(new ConnectionEvent(SELECTED_SSID));
-
-                    try
-                    {
-                        if (NetworkUtils.connectToWifi(SELECTED_SSID, PASSWORD))
-                        {
-                            connectedEvent.handle(null);
-                        }
-                        else
-                        {
-                            failedConnectionEvent.handle(new ConnectionEvent(SELECTED_SSID));
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        e.printStackTrace();
-                        failedConnectionEvent.handle(new ConnectionEvent(SELECTED_SSID));
-                    }
-                });
-
-                Button togglePasswordView = new Button("V");
-                togglePasswordView.setId("hw-default-button");
-                togglePasswordView.setOnAction(actionEvent ->
-                {
-                    showPassword = !showPassword;
-
-                    if (showPassword)
-                    {
-                        passwordTextField.setText(passwordField.getText());
-                        passwordPane.getChildren().remove(passwordField);
-                        passwordPane.getChildren().add(passwordTextField);
-                    }
-                    else
-                    {
-                        passwordField.setText(passwordTextField.getText());
-                        passwordPane.getChildren().remove(passwordTextField);
-                        passwordPane.getChildren().add(passwordField);
-                    }
-
-                });
-
-                passwordEntryBox.getChildren().add(passwordLabel);
-
-                passwordPane.getChildren().add(passwordField);
-                passwordEntryBox.getChildren().add(passwordPane);
-
-                passwordEntryBox.getChildren().add(togglePasswordView);
-
-                slide.setAlignment(Pos.CENTER);
-                slide.getChildren().add(infoLabel);
-                slide.getChildren().addAll(passwordEntryBox);
-                StackPane.setAlignment(slide, Pos.CENTER);
-
-                super.getChildren().clear();
-                enterPasswordPane.setCenter(slide);
-                super.setCenter(enterPasswordPane);
-
-                // todo: Write code to set rpi network interface
+                networkConnectionEntryEventHandler.handle(new NetworkConnectionEntryEvent(selectedSsid));
             }
         });
 

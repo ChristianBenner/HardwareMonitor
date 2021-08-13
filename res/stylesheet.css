@@ -155,6 +155,11 @@
      -fx-cursor: hand;
  }
 
+ #hw-network-connection-failed-label
+ {
+     -fx-text-fill: #FF0000;
+ }
+
 .progress-indicator {
     -fx-progress-color: orange;
 }
