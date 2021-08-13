@@ -163,37 +163,7 @@ public class ApplicationCore extends Application
         InformationPage informationPage = new InformationPage("Connecting", ssid);
         mainPane.getChildren().add(informationPage);
     }
-
-//    public void displayFailedToConnect(String ssid)
-//    {
-//        mainPane.getChildren().clear();
-//
-//        StackPane pane = new StackPane();
-//        pane.setId("standard-pane");
-//        VBox slide = new VBox();
-//        slide.setSpacing(5.0);
-//        Label titleLabel = new Label("Connection Failed");
-//        slide.setId("hw-welcome-page-pane");
-//        titleLabel.setId("hw-welcome-page-title");
-//        slide.setAlignment(Pos.CENTER);
-//        slide.getChildren().add(titleLabel);
-//
-//        Label infoLabel = new Label("Failed to connect to " + ssid + ". Password may be invalid.");
-//        infoLabel.setWrapText(true);
-//        infoLabel.setTextAlignment(TextAlignment.CENTER);
-//        infoLabel.setId("hw-welcome-page-subtitle");
-//        slide.getChildren().add(infoLabel);
-//
-//        Button button = new Button("Retry");
-//        button.setId("hw-default-button");
-//        slide.getChildren().add(button);
-//
-//        StackPane.setAlignment(slide, Pos.CENTER);
-//        pane.getChildren().add(slide);
-//
-//        mainPane.getChildren().add(pane);
-//    }
-
+    
     public void displayWaitingForConnectionPage()
     {
         mainPane.getChildren().clear();
