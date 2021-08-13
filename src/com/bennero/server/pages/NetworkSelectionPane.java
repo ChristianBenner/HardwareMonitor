@@ -37,6 +37,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
+import java.util.ArrayList;
+
 /**
  * Network selection pane is a class that will present a list of available networks. This is so that the user of the
  * hardware monitor does not have to exit the application in order to connect to a Wi-Fi network (as the hardware
@@ -54,7 +56,8 @@ public class NetworkSelectionPane extends BorderPane
     private Button refreshButton;
     private Button selectButton;
 
-    public NetworkSelectionPane(final EventHandler<NetworkConnectionEntryEvent> networkConnectionEntryEventHandler)
+    public NetworkSelectionPane(ArrayList<String> discoveredNetworks,
+                                final EventHandler<NetworkConnectionEntryEvent> networkConnectionEntryEventHandler)
     {
         this.networkConnectionEntryEventHandler = networkConnectionEntryEventHandler;
 
@@ -106,15 +109,7 @@ public class NetworkSelectionPane extends BorderPane
             }
         });
 
-        try
-        {
-            ssidListView.getItems().addAll(NetworkUtils.getWirelessNetworks());
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-
+        ssidListView.getItems().addAll(discoveredNetworks);
         super.setCenter(sensorOverview);
 
         super.setId("standard-pane");

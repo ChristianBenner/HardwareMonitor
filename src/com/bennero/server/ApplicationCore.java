@@ -122,15 +122,43 @@ public class ApplicationCore extends Application
             }));
     }
 
-    private void displayNetworkSelectionPage()
+    private void displayDiscoveringNetworksPage()
     {
         mainPane.getChildren().clear();
-        mainPane.getChildren().add(new NetworkSelectionPane(
-            networkConnectionEntryEvent ->
+        mainPane.getChildren().add(new InformationPage("Discovering Networks"));
+    }
+
+    private void displayNetworkSelectionPage()
+    {
+        displayDiscoveringNetworksPage();
+
+        // Discover networks on another thread to prevent locking up
+        Runnable runnable = () ->
+        {
+            ArrayList<String> discoveredNetworks = new ArrayList<>();
+
+            try
             {
-                // User has selected an SSID on the network list page, so display the network connection entry page
-                displayNetworkConnectionEntryPage(networkConnectionEntryEvent.getNetworkSsid());
-            }));
+                discoveredNetworks.addAll(NetworkUtils.getWirelessNetworks());
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+
+            Platform.runLater(() ->
+            {
+                mainPane.getChildren().clear();
+                mainPane.getChildren().add(new NetworkSelectionPane(discoveredNetworks, networkConnectionEntryEvent ->
+                {
+                    // User has selected an SSID on the network list page, so display the network connection entry page
+                    displayNetworkConnectionEntryPage(networkConnectionEntryEvent.getNetworkSsid());
+                }));
+            });
+        };
+
+        Thread thread = new Thread(runnable);
+        thread.start();
     }
 
     public void displayConnectedPage()
