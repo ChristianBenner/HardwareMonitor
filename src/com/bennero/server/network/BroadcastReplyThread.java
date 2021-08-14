@@ -63,7 +63,8 @@ import static com.bennero.server.Version.*;
  */
 class BroadcastReplyThread implements Runnable
 {
-    private static final String TAG = BroadcastReplyThread.class.getName();
+    // Class name used in logging
+    private static final String CLASS_NAME = BroadcastReplyThread.class.getName();
 
     private AddressInformation siteLocalAddressInformation;
 
@@ -100,7 +101,9 @@ class BroadcastReplyThread implements Runnable
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            Logger.log(LogLevel.ERROR, CLASS_NAME,
+                    "Failed to open datagram channel to receive broadcast messages");
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
         }
         finally
         {
@@ -112,7 +115,9 @@ class BroadcastReplyThread implements Runnable
                 }
                 catch (IOException e)
                 {
-                    e.printStackTrace();
+                    Logger.log(LogLevel.ERROR, CLASS_NAME,
+                            "Failed to close broadcast message receiver datagram channel");
+                    Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
                 }
             }
         }
@@ -124,8 +129,6 @@ class BroadcastReplyThread implements Runnable
         try
         {
             Socket socket = new Socket(InetAddress.getByAddress(ip4Address), Constants.BROADCAST_REPLY_PORT);
-            Logger.log(LogLevel.DEBUG, TAG, "Sending broadcast acknowledgement to editor: " +
-                    InetAddress.getByAddress(ip4Address));
             PrintStream broadcastReplyWriter = new PrintStream(socket.getOutputStream(), true);
 
             // Write broadcast reply message
@@ -140,12 +143,14 @@ class BroadcastReplyThread implements Runnable
             writeStringToMessage(replyMessage, BroadcastReplyDataPositions.HOSTNAME_POS, siteLocalAddressInformation.getHostname(), NAME_STRING_NUM_BYTES);
 
             broadcastReplyWriter.write(replyMessage, 0, MESSAGE_NUM_BYTES);
-            System.out.println("Sent broadcastReply message");
+
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, "Sent broadcast acknowledgement to editor: " +
+                    InetAddress.getByAddress(ip4Address));
         }
         catch (IOException e)
         {
-            System.err.println("THERE IS NO NETWORK ADAPTER - NOT CONNECTED TO A NETWORK");
-            e.printStackTrace();
+            Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to send broadcast reply message");
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
         }
     }
 }

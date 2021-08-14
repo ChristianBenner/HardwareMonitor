@@ -40,12 +40,59 @@ import javafx.scene.layout.VBox;
  */
 public class InformationButtonPage extends StackPane
 {
-    public InformationButtonPage(String title, String info, String buttonText, EventHandler buttonEvent)
+    private final String title;
+    private final String info;
+    private final String buttonText;
+    private final EventHandler buttonEvent;
+    private final boolean displayInfo;
+    private final boolean displayLoadingIcon;
+
+    public InformationButtonPage(String title, String info, boolean displayLoadingIcon, String buttonText,
+                                 EventHandler buttonEvent)
     {
-        init(title, info, buttonText, buttonEvent);
+        this.title = title;
+        this.info = info;
+        this.buttonText = buttonText;
+        this.buttonEvent = buttonEvent;
+        this.displayInfo = true;
+        this.displayLoadingIcon = displayLoadingIcon;
+        init();
     }
 
-    private void init(String title, String info, String buttonText, EventHandler buttonEvent)
+    public InformationButtonPage(String title, String info, String buttonText, EventHandler buttonEvent)
+    {
+        this.title = title;
+        this.info = info;
+        this.buttonText = buttonText;
+        this.buttonEvent = buttonEvent;
+        this.displayInfo = true;
+        this.displayLoadingIcon = true;
+        init();
+    }
+
+    public InformationButtonPage(String title, String buttonText, boolean displayLoadingIcon, EventHandler buttonEvent)
+    {
+        this.title = title;
+        this.info = null;
+        this.buttonText = buttonText;
+        this.buttonEvent = buttonEvent;
+        this.displayInfo = false;
+        this.displayLoadingIcon = displayLoadingIcon;
+        init();
+    }
+
+    public InformationButtonPage(String title, String buttonText, EventHandler buttonEvent)
+    {
+        this.title = title;
+        this.info = null;
+        this.buttonText = buttonText;
+        this.buttonEvent = buttonEvent;
+        this.displayInfo = false;
+        this.displayLoadingIcon = true;
+        init();
+    }
+
+    private void init()
     {
         super.setId("standard-pane");
         VBox slide = new VBox();
@@ -56,7 +103,7 @@ public class InformationButtonPage extends StackPane
         slide.setAlignment(Pos.CENTER);
         slide.getChildren().add(titleLabel);
 
-        if (info != null)
+        if (displayInfo)
         {
             Label infoLabel = new Label(info);
             infoLabel.setId("hw-welcome-page-subtitle");
@@ -68,8 +115,11 @@ public class InformationButtonPage extends StackPane
         button.setOnAction(buttonEvent);
         slide.getChildren().add(button);
 
-        ProgressIndicator progressIndicator = new ProgressIndicator();
-        slide.getChildren().add(progressIndicator);
+        if(displayLoadingIcon)
+        {
+            ProgressIndicator progressIndicator = new ProgressIndicator();
+            slide.getChildren().add(progressIndicator);
+        }
 
         StackPane.setAlignment(slide, Pos.CENTER);
         super.getChildren().add(slide);

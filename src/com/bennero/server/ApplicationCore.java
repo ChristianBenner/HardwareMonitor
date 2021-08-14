@@ -29,6 +29,8 @@ import com.bennero.common.TransitionType;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import com.bennero.common.networking.AddressInformation;
+import com.bennero.common.networking.DiscoveredNetwork;
+import com.bennero.common.networking.DiscoveredNetworkList;
 import com.bennero.common.networking.NetworkUtils;
 import com.bennero.common.osspecific.OSUtils;
 import com.bennero.server.event.*;
@@ -65,7 +67,7 @@ import java.util.List;
  */
 public class ApplicationCore extends Application
 {
-    public static final String CLASS_NAME = ApplicationCore.class.getName();
+    private static final String CLASS_NAME = ApplicationCore.class.getName();
 
     public static final int WINDOW_WIDTH_PX = 800;
     public static final int WINDOW_HEIGHT_PX = 480;
@@ -78,10 +80,12 @@ public class ApplicationCore extends Application
     private Server server;
     private PageRoller pageRoller;
 
-    private void displayNetworkConnectionEntryPage(final String networkSsid, final String previousConnectionError)
+    private void displayNetworkConnectionEntryPage(final String networkDevice,
+                                                   final String networkSsid,
+                                                   final String previousConnectionError)
     {
         mainPane.getChildren().clear();
-        mainPane.getChildren().add(new NetworkConnectionEntryPage(networkSsid, previousConnectionError,
+        mainPane.getChildren().add(new NetworkConnectionEntryPage(networkDevice,networkSsid, previousConnectionError,
             event -> // Back button selected event
             {
                 displayNetworkSelectionPage();
@@ -96,14 +100,16 @@ public class ApplicationCore extends Application
             },
             event -> // Failed to connect event
             {
-                displayNetworkConnectionEntryPage(event.getNetworkSsid(), event.getPreviousConnectionError());
+                displayNetworkConnectionEntryPage(event.getNetworkDevice(), event.getNetworkSsid(),
+                        event.getPreviousConnectionError());
             }));
     }
 
-    private void displayNetworkConnectionEntryPage(final String networkSsid)
+    private void displayNetworkConnectionEntryPage(final String networkDevice,
+                                                   final String networkSsid)
     {
         mainPane.getChildren().clear();
-        mainPane.getChildren().add(new NetworkConnectionEntryPage(networkSsid,
+        mainPane.getChildren().add(new NetworkConnectionEntryPage(networkDevice, networkSsid,
             event -> // Back button selected event
             {
                 displayNetworkSelectionPage();
@@ -118,7 +124,8 @@ public class ApplicationCore extends Application
             },
             event -> // Failed to connect event
             {
-                displayNetworkConnectionEntryPage(event.getNetworkSsid(), event.getPreviousConnectionError());
+                displayNetworkConnectionEntryPage(event.getNetworkDevice(),event.getNetworkSsid(),
+                        event.getPreviousConnectionError());
             }));
     }
 
@@ -128,6 +135,26 @@ public class ApplicationCore extends Application
         mainPane.getChildren().add(new InformationPage("Discovering Networks"));
     }
 
+    private void displayNetworkErrorPage(String infoString)
+    {
+        mainPane.getChildren().clear();
+        mainPane.getChildren().add(new InformationButtonPage("Error Discovering Networks", infoString,
+                false, "Back", event ->
+        {
+            if (!NetworkUtils.isConnected())
+            {
+                Logger.log(LogLevel.WARNING, CLASS_NAME,
+                        "Not connected to a network, opening connection page");
+                displayNetworkSelectionPage();
+            }
+            else
+            {
+                // Go back to the waiting for connection page
+                displayWaitingForConnectionPage();
+            }
+        }));
+    }
+
     private void displayNetworkSelectionPage()
     {
         displayDiscoveringNetworksPage();
@@ -135,26 +162,39 @@ public class ApplicationCore extends Application
         // Discover networks on another thread to prevent locking up
         Runnable runnable = () ->
         {
-            ArrayList<String> discoveredNetworks = new ArrayList<>();
-
             try
             {
-                discoveredNetworks.addAll(NetworkUtils.getWirelessNetworks());
+                DiscoveredNetworkList discoveredNetworks = NetworkUtils.getWirelessNetworks();
+
+                Platform.runLater(() ->
+                {
+                    // If an error occurred retrieving the networks, display it
+                    if(discoveredNetworks.hasErrorOccurred())
+                    {
+                        displayNetworkErrorPage(discoveredNetworks.getErrorMessage());
+                    }
+                    else
+                    {
+                        mainPane.getChildren().clear();
+                        mainPane.getChildren().add(new NetworkSelectionPane(discoveredNetworks, networkConnectionEntryEvent ->
+                        {
+                            // User has selected an SSID on the network list page, so display the network connection entry page
+                            displayNetworkConnectionEntryPage(networkConnectionEntryEvent.getNetworkDevice(),
+                                    networkConnectionEntryEvent.getNetworkSsid());
+                        }));
+                    }
+                });
             }
             catch (Exception e)
             {
-                e.printStackTrace();
-            }
+                Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to retrieve wireless networks");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
 
-            Platform.runLater(() ->
-            {
-                mainPane.getChildren().clear();
-                mainPane.getChildren().add(new NetworkSelectionPane(discoveredNetworks, networkConnectionEntryEvent ->
+                Platform.runLater(() ->
                 {
-                    // User has selected an SSID on the network list page, so display the network connection entry page
-                    displayNetworkConnectionEntryPage(networkConnectionEntryEvent.getNetworkSsid());
-                }));
-            });
+                    displayNetworkErrorPage("Unknown failure");
+                });
+            }
         };
 
         Thread thread = new Thread(runnable);
@@ -216,7 +256,9 @@ public class ApplicationCore extends Application
         }
         catch (UnknownHostException e)
         {
-            e.printStackTrace();
+            Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to determine hostname of this device");
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
+
             InformationPage informationPage = new InformationPage("Failed to determine hostname");
             mainPane.getChildren().add(informationPage);
         }
@@ -378,7 +420,8 @@ public class ApplicationCore extends Application
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to run server");
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
         }
     }
 

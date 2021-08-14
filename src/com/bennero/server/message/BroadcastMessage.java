@@ -23,6 +23,8 @@
 
 package com.bennero.server.message;
 
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import com.bennero.common.messages.BroadcastAnnouncementDataPositions;
 import com.bennero.common.networking.NetworkUtils;
 
@@ -43,6 +45,9 @@ import static com.bennero.common.networking.NetworkUtils.readLong;
  */
 public class BroadcastMessage
 {
+    // Class name used in logging
+    private static final String CLASS_NAME = BroadcastMessage.class.getName();
+
     private final boolean verifiedBroadcastMessage;
     private final byte[] ip4Address;
 
@@ -62,7 +67,8 @@ public class BroadcastMessage
         {
             byte[] ip4Address = readBytes(bytes, BroadcastAnnouncementDataPositions.IP4_ADDRESS_POS,
                     IP4_ADDRESS_NUM_BYTES);
-            System.out.println("Received a broadcast announcement message from: " + NetworkUtils.ip4AddressToString(ip4Address));
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received a broadcast announcement message from: " +
+                    NetworkUtils.ip4AddressToString(ip4Address));
             return new BroadcastMessage(true, ip4Address);
         }
 

@@ -51,7 +51,7 @@ import static com.bennero.common.networking.NetworkUtils.writeToMessage;
 class HeartbeatSender implements Runnable
 {
     // Tag for logging
-    private static final String TAG = HeartbeatSender.class.getSimpleName();
+    private static final String CLASS_NAME = HeartbeatSender.class.getSimpleName();
 
     private static int SCREEN_TIME_OUT_SECONDS_RASPBERRY_PI_OS = 20;
 
@@ -73,18 +73,22 @@ class HeartbeatSender implements Runnable
     {
         if (connection.isConnectionActive())
         {
-            System.out.println("Attempting Connection: " + NetworkUtils.ip4AddressToString(connection.getAddress()));
+            Logger.log(LogLevel.INFO, CLASS_NAME, "Attempting Connection: " +
+                    NetworkUtils.ip4AddressToString(connection.getAddress()));
 
             // This means that the IP4 and MAC address have just been discovered, so we can start with a direct
             // connection attempt
             try
             {
-                socket.connect(new InetSocketAddress(InetAddress.getByAddress(connection.getAddress()), HEARTBEAT_PORT), 5000);
+                socket.connect(new InetSocketAddress(InetAddress.getByAddress(connection.getAddress()), HEARTBEAT_PORT),
+                        5000);
                 socketWriter = new PrintStream(socket.getOutputStream(), true);
             }
             catch (IOException e)
             {
-                e.printStackTrace();
+                Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to connect to " +
+                        NetworkUtils.ip4AddressToString(connection.getAddress()));
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
             }
         }
     }
@@ -109,7 +113,8 @@ class HeartbeatSender implements Runnable
                 }
                 catch (IOException e)
                 {
-                    e.printStackTrace();
+                    Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to close heartbeat socket");
+                    Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
                 }
 
                 connect();
@@ -123,7 +128,7 @@ class HeartbeatSender implements Runnable
                 writeToMessage(replyMessage, HW_HEARTBEAT_VALIDATION_NUMBER_POS, HW_HEARTBEAT_VALIDATION_NUMBER);
 
                 socketWriter.write(replyMessage, 0, MESSAGE_NUM_BYTES);
-                Logger.log(LogLevel.DEBUG, TAG, "Sent heartbeat message");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Sent heartbeat message");
                 socketWriter.flush();
 
                 secondsConnectionLost = 0;
@@ -140,7 +145,7 @@ class HeartbeatSender implements Runnable
             {
                 if (connectionLostCounterEnabled)
                 {
-                    Logger.log(LogLevel.DEBUG, TAG, "Seconds since connection lost: " + secondsConnectionLost);
+                    Logger.log(LogLevel.DEBUG, CLASS_NAME, "Seconds since connection lost: " + secondsConnectionLost);
                     secondsConnectionLost++;
 
                     // If we are on a Raspberry Pi OS and the screen is on, turn it off
@@ -159,7 +164,8 @@ class HeartbeatSender implements Runnable
             }
             catch (InterruptedException e)
             {
-                e.printStackTrace();
+                Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to sleep thread");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
             }
         }
     }

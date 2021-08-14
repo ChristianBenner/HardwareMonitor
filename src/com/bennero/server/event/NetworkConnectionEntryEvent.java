@@ -23,6 +23,7 @@
 
 package com.bennero.server.event;
 
+import com.bennero.common.networking.DiscoveredNetwork;
 import com.bennero.server.message.SensorDataMessage;
 import com.bennero.server.network.ConnectionEvent;
 import javafx.event.Event;
@@ -40,25 +41,52 @@ import javafx.event.EventHandler;
  */
 public class NetworkConnectionEntryEvent extends Event
 {
+    private final String networkDevice;
     private final String networkSsid;
     private final String previousConnectionError;
     private final boolean showPreviousConnectionError;
 
-    public NetworkConnectionEntryEvent(final String networkSsid)
+    public NetworkConnectionEntryEvent(final DiscoveredNetwork discoveredNetwork)
+    {
+        super(discoveredNetwork.getNetworkSsid(), null, null);
+        this.networkDevice = discoveredNetwork.getNetworkDevice();
+        this.networkSsid = discoveredNetwork.getNetworkSsid();
+        this.previousConnectionError = null;
+        this.showPreviousConnectionError = false;
+    }
+
+    public NetworkConnectionEntryEvent(final String networkDevice, final String networkSsid)
     {
         super(networkSsid, null, null);
+        this.networkDevice = networkDevice;
         this.networkSsid = networkSsid;
         this.previousConnectionError = null;
         this.showPreviousConnectionError = false;
     }
 
-    public NetworkConnectionEntryEvent(final String networkSsid,
+    public NetworkConnectionEntryEvent(final DiscoveredNetwork discoveredNetwork, final String connectionErrorMessage)
+    {
+        super(discoveredNetwork.getNetworkSsid(), null, null);
+        this.networkDevice = discoveredNetwork.getNetworkDevice();
+        this.networkSsid = discoveredNetwork.getNetworkSsid();
+        this.previousConnectionError = connectionErrorMessage;
+        this.showPreviousConnectionError = true;
+    }
+
+    public NetworkConnectionEntryEvent(final String networkDevice,
+                                       final String networkSsid,
                                        final String connectionErrorMessage)
     {
         super(networkSsid, null, null);
+        this.networkDevice = networkDevice;
         this.networkSsid = networkSsid;
         this.previousConnectionError = connectionErrorMessage;
         this.showPreviousConnectionError = true;
+    }
+
+    public String getNetworkDevice()
+    {
+        return networkDevice;
     }
 
     public String getNetworkSsid()

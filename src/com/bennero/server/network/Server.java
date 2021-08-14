@@ -23,6 +23,7 @@
 
 package com.bennero.server.network;
 
+import com.bennero.common.Sensor;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import com.bennero.common.networking.AddressInformation;
@@ -51,6 +52,9 @@ import static com.bennero.common.Constants.PORT;
  */
 public class Server implements Runnable
 {
+    // Class name used in logging
+    private static final String CLASS_NAME = Server.class.getName();
+
     private AddressInformation siteLocalAddressInformation;
     private EventHandler connectedEvent;
     private EventHandler disconnectedEvent;
@@ -122,9 +126,9 @@ public class Server implements Runnable
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            Logger.log(LogLevel.ERROR, CLASS_NAME, "Server connection ended unexpectedly");
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
 
-            System.err.println("End of server connection");
             if (serverSocketChannel != null)
             {
                 try
@@ -133,7 +137,8 @@ public class Server implements Runnable
                 }
                 catch (IOException ex)
                 {
-                    ex.printStackTrace();
+                    Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to close the server socket channel");
+                    Logger.log(LogLevel.DEBUG, CLASS_NAME, ex.getMessage());
                 }
             }
             disconnectedEvent.handle(new Event(null));

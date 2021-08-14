@@ -23,7 +23,12 @@
 
 package com.bennero.server.pages;
 
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
+import com.bennero.common.networking.DiscoveredNetwork;
+import com.bennero.common.networking.DiscoveredNetworkList;
 import com.bennero.common.networking.NetworkUtils;
+import com.bennero.server.ApplicationCore;
 import com.bennero.server.event.NetworkConnectionEntryEvent;
 import com.bennero.server.event.PageSetupEvent;
 import com.bennero.server.message.PageSetupMessage;
@@ -50,15 +55,19 @@ import java.util.ArrayList;
  */
 public class NetworkSelectionPane extends BorderPane
 {
+    private static final String CLASS_NAME = NetworkSelectionPane.class.getName();
+
+    private DiscoveredNetworkList discoveredNetworks;
     private final EventHandler<NetworkConnectionEntryEvent> networkConnectionEntryEventHandler;
     private BorderPane sensorOverview;
-    private ListView<String> ssidListView;
+    private ListView<DiscoveredNetwork> ssidListView;
     private Button refreshButton;
     private Button selectButton;
 
-    public NetworkSelectionPane(ArrayList<String> discoveredNetworks,
+    public NetworkSelectionPane(final DiscoveredNetworkList discoveredNetworks,
                                 final EventHandler<NetworkConnectionEntryEvent> networkConnectionEntryEventHandler)
     {
+        this.discoveredNetworks = discoveredNetworks;
         this.networkConnectionEntryEventHandler = networkConnectionEntryEventHandler;
 
         super.setPadding(new Insets(10));
@@ -79,18 +88,7 @@ public class NetworkSelectionPane extends BorderPane
         footerPane.setLeft(refreshButton);
 
         // Refresh button clears the list and then re-adds the found wireless networks
-        refreshButton.setOnAction(actionEvent ->
-        {
-            ssidListView.getItems().clear();
-            try
-            {
-                ssidListView.getItems().addAll(NetworkUtils.getWirelessNetworks());
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-        });
+        refreshButton.setOnAction(actionEvent -> refreshNetworkList());
 
         selectButton = new Button("Connect");
         selectButton.setId("hw-default-button");
@@ -100,19 +98,56 @@ public class NetworkSelectionPane extends BorderPane
         sensorOverview.setCenter(ssidListView);
         sensorOverview.setBottom(footerPane);
 
-        selectButton.setOnMouseClicked(mouseEvent ->
-        {
-            final String selectedSsid = ssidListView.getSelectionModel().getSelectedItem();
-            if (selectedSsid != null && !selectedSsid.isEmpty())
-            {
-                networkConnectionEntryEventHandler.handle(new NetworkConnectionEntryEvent(selectedSsid));
-            }
-        });
+        selectButton.setOnMouseClicked(mouseEvent -> connectToNetwork(ssidListView.getSelectionModel().getSelectedItem()));
+        addNetworksToList(discoveredNetworks);
 
-        ssidListView.getItems().addAll(discoveredNetworks);
         super.setCenter(sensorOverview);
 
         super.setId("standard-pane");
         title.setId("pane-title");
+    }
+
+    private void addNetworksToList(final DiscoveredNetworkList discoveredNetworks)
+    {
+        // If there are multiple devices, include the device name in the string
+        boolean includeDeviceName = discoveredNetworks.getNumberOfDevices() > 1;
+
+        for(int i = 0; i < discoveredNetworks.size(); i++)
+        {
+            discoveredNetworks.get(i).setIncludeDeviceStr(includeDeviceName);
+            ssidListView.getItems().add(discoveredNetworks.get(i));
+        }
+    }
+
+    private void connectToNetwork(final DiscoveredNetwork discoveredNetwork)
+    {
+        if (discoveredNetwork != null && discoveredNetwork.getNetworkDevice() != null &&
+                discoveredNetwork.getNetworkSsid() != null && !discoveredNetwork.getNetworkDevice().isEmpty() &&
+                !discoveredNetwork.getNetworkSsid().isEmpty())
+        {
+            networkConnectionEntryEventHandler.handle(new NetworkConnectionEntryEvent(discoveredNetwork));
+        }
+        else
+        {
+            Logger.log(LogLevel.ERROR, CLASS_NAME,
+                    "Failed to connect to network due to invalid or empty selection from the network list");
+        }
+    }
+
+    private void refreshNetworkList()
+    {
+        discoveredNetworks.clear();
+        ssidListView.getItems().clear();
+        try
+        {
+            discoveredNetworks.addAll(NetworkUtils.getWirelessNetworks());
+            addNetworksToList(discoveredNetworks);
+        }
+        catch (Exception e)
+        {
+            Logger.log(LogLevel.ERROR, CLASS_NAME,
+                    "Failed to refresh network list due to error in obtaining the available wireless networks");
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
+        }
     }
 }

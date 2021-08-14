@@ -25,6 +25,8 @@ package com.bennero.server;
 
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import com.bennero.server.pages.CustomisableSensorPage;
 import javafx.application.Platform;
 
@@ -33,6 +35,9 @@ import java.util.List;
 
 class PageRoller implements Runnable
 {
+    // Tag for logging
+    private static final String CLASS_NAME = PageRoller.class.getSimpleName();
+
     private final ApplicationCore applicationCore;
     private List<CustomisableSensorPage> customisableSensorPages;
     private CustomisableSensorPage currentCustomisableSensorPage;
@@ -202,7 +207,8 @@ class PageRoller implements Runnable
                             previousCustomisableSensorPage = currentCustomisableSensorPage;
                             currentCustomisableSensorPage = customisableSensorPages.get(i);
                             pageViewStartTimeMs = System.currentTimeMillis();
-                            System.out.println("Display Page: " + customisableSensorPages.get(i).getTitle());
+                            Logger.log(LogLevel.DEBUG, CLASS_NAME, "Display Page: " +
+                                    customisableSensorPages.get(i).getTitle());
                             Platform.runLater(() -> applicationCore.displayPage(currentCustomisableSensorPage, previousCustomisableSensorPage));
                         }
                     }
@@ -215,7 +221,8 @@ class PageRoller implements Runnable
             }
             catch (InterruptedException e)
             {
-                e.printStackTrace();
+                Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to sleep thread");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
             }
         }
     }

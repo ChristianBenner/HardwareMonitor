@@ -59,7 +59,7 @@ import static com.bennero.server.message.ConnectionRequestMessage.processConnect
 public class Connection implements Runnable
 {
     // Tag for logging
-    private static final String TAG = Connection.class.getSimpleName();
+    private static final String CLASS_NAME = Connection.class.getSimpleName();
 
     private SynchronizedConnection connection;
     private SocketChannel socketChannel;
@@ -141,15 +141,15 @@ public class Connection implements Runnable
                 readMessage(bytes);
             }
 
-            Logger.log(LogLevel.INFO, TAG, "Connection has ended with '" + connection.getClientHostname() +
+            Logger.log(LogLevel.INFO, CLASS_NAME, "Connection has ended with '" + connection.getClientHostname() +
                     "'/" + NetworkUtils.ip4AddressToString(connection.getAddress()));
             socketChannel.close();
         }
         catch (Exception e)
         {
-            Logger.log(LogLevel.ERROR, TAG, "Unexpected end of connection with '" +
+            Logger.log(LogLevel.ERROR, CLASS_NAME, "Unexpected end of connection with '" +
                     connection.getClientHostname() + "'/" + NetworkUtils.ip4AddressToString(connection.getAddress()));
-            e.printStackTrace();
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
         }
         finally
         {
@@ -163,51 +163,52 @@ public class Connection implements Runnable
         switch (bytes[MESSAGE_TYPE_POS])
         {
             case MessageType.DATA:
-                //System.out.println("Received hardware data message");
                 sensorDataMessageReceived.handle(new SensorDataEvent(SensorDataMessage.processSensorDataMessage(bytes)));
                 break;
             case MessageType.PAGE_SETUP:
-                System.out.println("Received page setup message");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received page setup message");
                 pageMessageReceived.handle(new PageSetupEvent(PageSetupMessage.readPageSetupMessage(bytes)));
                 break;
             case MessageType.SENSOR_SETUP:
-                System.out.println("Received sensor setup message");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received sensor setup message");
                 sensorMessageReceived.handle(new SensorSetupEvent(SensorSetupMessage.processSensorSetupMessage(bytes)));
                 break;
             case MessageType.REMOVE_PAGE:
-                System.out.println("Received remove page message");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received remove page message");
                 removePageMessageReceived.handle(new RemovePageEvent(RemovePageMessage.processRemovePageMessage(bytes)));
                 break;
             case MessageType.REMOVE_SENSOR:
-                System.out.println("Received remove sensor message");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received remove sensor message");
                 removeSensorMessageReceived.handle(new RemoveSensorEvent(RemoveSensorMessage.processRemoveSensorMessage(bytes)));
                 break;
             case MessageType.SENSOR_TRANSFORMATION_MESSAGE:
-                System.out.println("Received sensor transformation message");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received sensor transformation message");
                 sensorTransformationMessageReceived.handle(new SensorTransformationEvent(SensorTransformationMessage.processSensorTransformationMessage(bytes)));
                 break;
             case MessageType.CONNECTION_REQUEST_MESSAGE:
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received connection request message");
                 handleConnectionRequest(processConnectionRequestMessageData(bytes));
                 break;
             case MessageType.DISCONNECT_MESSAGE:
-                System.out.println("Received disconnect message");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received disconnect message");
                 handleDisconnect();
                 break;
             default:
-                System.out.println("Received Unrecognised Message Type: " + (int) bytes[MESSAGE_TYPE_POS]);
+                Logger.log(LogLevel.WARNING, CLASS_NAME, "Received unrecognised message of type: " +
+                        (int)bytes[MESSAGE_TYPE_POS]);
                 break;
         }
     }
 
     private void handleConnectionRequest(ConnectionRequestMessage message)
     {
-        // We now know the clients hostname so store this information
+        // We now know the client hostname so store this information
         setClientHostname(message.getHostname());
 
         // Announce connection request
-        System.out.println("Received connection request message from '" + message.getHostname() + "' v(" +
-                message.getMajorVersion() + "." + message.getMinorVersion() + "." + message.getPatchVersion() +
-                ")");
+        Logger.log(LogLevel.INFO, CLASS_NAME, "Received connection request message from '" +
+                message.getHostname() + "' v(" + message.getMajorVersion() + "." + message.getMinorVersion() + "." +
+                message.getPatchVersion() + ")");
 
         // Is the version compatible
         boolean versionMismatch = isVersionCompatible(VERSION_MAJOR, VERSION_MINOR, message.getMajorVersion(),
@@ -221,7 +222,7 @@ public class Connection implements Runnable
         {
             sendConnectionRequestReplyMessage(true, false, false);
 
-            Logger.log(LogLevel.INFO, TAG, "Accepted connection request message from '" + message.
+            Logger.log(LogLevel.INFO, CLASS_NAME, "Accepted connection request message from '" + message.
                     getHostname() + "' v(" + message.getMajorVersion() + "." + message.getMinorVersion() + "." +
                     message.getPatchVersion() + ")");
             connection.setConnection(this);
@@ -232,7 +233,7 @@ public class Connection implements Runnable
             {
                 sendConnectionRequestReplyMessage(false, true, currentlyInUse);
 
-                Logger.log(LogLevel.WARNING, TAG, "Rejected connection request message from '" +
+                Logger.log(LogLevel.WARNING, CLASS_NAME, "Rejected connection request message from '" +
                         message.getHostname() + "' v(" + message.getMajorVersion() + "." + message.
                         getMinorVersion() + "." + message.getPatchVersion() + ") because the client version " +
                         "is not compatible with the monitor version (" + Version.getVersionString() + ")");
@@ -242,7 +243,7 @@ public class Connection implements Runnable
                 sendConnectionRequestReplyMessage(false, false, true,
                         connection.getClientHostname());
 
-                Logger.log(LogLevel.WARNING, TAG, "Rejected connection request message from '" +
+                Logger.log(LogLevel.WARNING, CLASS_NAME, "Rejected connection request message from '" +
                         message.getHostname() + "' v(" + message.getMajorVersion() + "." + message.
                         getMinorVersion() + "." + message.getPatchVersion() + ") because the monitor is " +
                         "currently in use by '" + connection.getClientHostname() + "'");
@@ -256,7 +257,8 @@ public class Connection implements Runnable
             }
             catch (IOException e)
             {
-                e.printStackTrace();
+                Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to close connections socket channel");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
             }
         }
     }
@@ -269,7 +271,8 @@ public class Connection implements Runnable
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to send connections socket channel");
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
         }
     }
 
@@ -297,18 +300,19 @@ public class Connection implements Runnable
         try
         {
             socketChannel.socket().getOutputStream().write(message, 0, MESSAGE_NUM_BYTES);
-            System.out.println("Sent connection request reply message");
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, "Sent connection request reply message");
             socketChannel.socket().getOutputStream().flush();
+
+            if (acceptConnection)
+            {
+                connectedEvent.handle(null);
+                setConnectionAlive(true);
+            }
         }
         catch (IOException e)
         {
-            e.printStackTrace();
-        }
-
-        if (acceptConnection)
-        {
-            connectedEvent.handle(null);
-            setConnectionAlive(true);
+            Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to sent connection request reply message");
+            Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
         }
     }
 

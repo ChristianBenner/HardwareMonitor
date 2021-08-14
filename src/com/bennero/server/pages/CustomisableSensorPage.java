@@ -430,7 +430,6 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
     @Override
     public void setTitle(String title)
     {
-        System.out.println("RECVD TITLE: " + title + ", CHANGE(" + ((getTitle() != title) ? "TRUE" : "FALSE") + ")");
         if (getTitle() != title)
         {
             pageData.setTitle(title);
@@ -447,7 +446,6 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
     @Override
     public void setTitleEnabled(boolean enabled)
     {
-        System.out.println("RECVD TITLEENABLED: " + enabled + ", CHANGE(" + ((isTitleEnabled() != enabled) ? "TRUE" : "FALSE") + ")");
         if (isTitleEnabled() != enabled)
         {
             pageData.setTitleEnabled(enabled);

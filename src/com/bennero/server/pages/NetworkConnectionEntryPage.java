@@ -1,5 +1,7 @@
 package com.bennero.server.pages;
 
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import com.bennero.common.networking.ConnectionAttemptStatus;
 import com.bennero.common.networking.NetworkUtils;
 import com.bennero.server.event.NetworkConnectionEntryEvent;
@@ -17,6 +19,10 @@ import javafx.scene.layout.VBox;
 
 public class NetworkConnectionEntryPage extends BorderPane
 {
+    // Class name used in logging
+    private static final String CLASS_NAME = NetworkConnectionEntryPage.class.getSimpleName();
+
+    private final String networkDevice;
     private final String networkSsid;
     private final String previousConnectionError;
     private final boolean showPreviousConnectionError;
@@ -28,12 +34,14 @@ public class NetworkConnectionEntryPage extends BorderPane
 
     private boolean showPassword;
 
-    public NetworkConnectionEntryPage(final String networkSsid,
+    public NetworkConnectionEntryPage(final String networkDevice,
+                                      final String networkSsid,
                                       final EventHandler backButtonEvent,
                                       final EventHandler<ConnectionEvent> connectingEvent,
                                       final EventHandler connectedEvent,
                                       final EventHandler<NetworkConnectionEntryEvent> failedConnectionEvent)
     {
+        this.networkDevice = networkDevice;
         this.networkSsid = networkSsid;
         this.showPassword = false;
         this.showPreviousConnectionError = false;
@@ -45,13 +53,15 @@ public class NetworkConnectionEntryPage extends BorderPane
         init();
     }
 
-    public NetworkConnectionEntryPage(final String networkSsid,
+    public NetworkConnectionEntryPage(final String networkDevice,
+                                      final String networkSsid,
                                       final String connectionErrorMessage,
                                       final EventHandler backButtonEvent,
                                       final EventHandler<ConnectionEvent> connectingEvent,
                                       final EventHandler connectedEvent,
                                       final EventHandler<NetworkConnectionEntryEvent> failedConnectionEvent)
     {
+        this.networkDevice = networkDevice;
         this.networkSsid = networkSsid;
         this.previousConnectionError = connectionErrorMessage;
         this.showPreviousConnectionError = true;
@@ -112,7 +122,8 @@ public class NetworkConnectionEntryPage extends BorderPane
 
             try
             {
-                final ConnectionAttemptStatus connectionAttemptStatus = NetworkUtils.connectToWifi(networkSsid,
+                final ConnectionAttemptStatus connectionAttemptStatus = NetworkUtils.connectToWifi(networkDevice,
+                        networkSsid,
                         PASSWORD);
 
                 switch (connectionAttemptStatus)
@@ -121,39 +132,44 @@ public class NetworkConnectionEntryPage extends BorderPane
                         connectedEvent.handle(null);
                         break;
                     case OS_NOT_SUPPORTED:
-                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkDevice, networkSsid,
                                 "Operating system not supported to connect to networks"));
                         break;
                     case FAILED_TO_WRITE_NETWORK_DATA_FILE:
-                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkDevice, networkSsid,
                                 "Failed to write to the network data file"));
                         break;
                     case NETWORK_DATA_FILE_NOT_FOUND:
-                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkDevice, networkSsid,
                                 "Failed to locate the network data file"));
                         break;
                     case FAILED_TO_RECONFIGURE_NETWORK:
-                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkDevice, networkSsid,
                                 "Failed to reconfigure the network"));
                         break;
                     case FAILED_TO_CONNECT:
-                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkDevice, networkSsid,
                                 "Failed to connect"));
                         break;
                     case INCORRECT_PASSWORD:
-                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkDevice, networkSsid,
                                 "Password entered was incorrect"));
+                        break;
+                    case PASSWORD_REQUIRED:
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkDevice, networkSsid,
+                                "This network requires a password"));
                         break;
                     case UNKNOWN:
                     default:
-                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
+                        failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkDevice, networkSsid,
                                 "Unknown failure"));
                         break;
                 }
             }
             catch (Exception e)
             {
-                e.printStackTrace();
+                Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to connect to network " + networkSsid);
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
                 failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
                         "Unsupported operating system"));
             }
