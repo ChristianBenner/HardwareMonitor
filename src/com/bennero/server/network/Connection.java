@@ -193,10 +193,6 @@ public class Connection implements Runnable
                 Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received disconnect message");
                 handleDisconnect();
                 break;
-            default:
-                Logger.log(LogLevel.WARNING, CLASS_NAME, "Received unrecognised message of type: " +
-                        (int)bytes[MESSAGE_TYPE_POS]);
-                break;
         }
     }
 
