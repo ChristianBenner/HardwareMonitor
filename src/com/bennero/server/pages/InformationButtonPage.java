@@ -34,12 +34,11 @@ import javafx.scene.layout.VBox;
 /**
  * A page that displays configurable information/text and a button
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class InformationButtonPage extends StackPane
-{
+public class InformationButtonPage extends StackPane {
     private final String title;
     private final String info;
     private final String buttonText;
@@ -48,8 +47,7 @@ public class InformationButtonPage extends StackPane
     private final boolean displayLoadingIcon;
 
     public InformationButtonPage(String title, String info, boolean displayLoadingIcon, String buttonText,
-                                 EventHandler buttonEvent)
-    {
+                                 EventHandler buttonEvent) {
         this.title = title;
         this.info = info;
         this.buttonText = buttonText;
@@ -59,8 +57,7 @@ public class InformationButtonPage extends StackPane
         init();
     }
 
-    public InformationButtonPage(String title, String info, String buttonText, EventHandler buttonEvent)
-    {
+    public InformationButtonPage(String title, String info, String buttonText, EventHandler buttonEvent) {
         this.title = title;
         this.info = info;
         this.buttonText = buttonText;
@@ -70,8 +67,7 @@ public class InformationButtonPage extends StackPane
         init();
     }
 
-    public InformationButtonPage(String title, String buttonText, boolean displayLoadingIcon, EventHandler buttonEvent)
-    {
+    public InformationButtonPage(String title, String buttonText, boolean displayLoadingIcon, EventHandler buttonEvent) {
         this.title = title;
         this.info = null;
         this.buttonText = buttonText;
@@ -81,8 +77,7 @@ public class InformationButtonPage extends StackPane
         init();
     }
 
-    public InformationButtonPage(String title, String buttonText, EventHandler buttonEvent)
-    {
+    public InformationButtonPage(String title, String buttonText, EventHandler buttonEvent) {
         this.title = title;
         this.info = null;
         this.buttonText = buttonText;
@@ -92,8 +87,7 @@ public class InformationButtonPage extends StackPane
         init();
     }
 
-    private void init()
-    {
+    private void init() {
         super.setId("standard-pane");
         VBox slide = new VBox();
         slide.setSpacing(5.0);
@@ -103,8 +97,7 @@ public class InformationButtonPage extends StackPane
         slide.setAlignment(Pos.CENTER);
         slide.getChildren().add(titleLabel);
 
-        if (displayInfo)
-        {
+        if (displayInfo) {
             Label infoLabel = new Label(info);
             infoLabel.setId("hw-welcome-page-subtitle");
             slide.getChildren().add(infoLabel);
@@ -115,8 +108,7 @@ public class InformationButtonPage extends StackPane
         button.setOnAction(buttonEvent);
         slide.getChildren().add(button);
 
-        if(displayLoadingIcon)
-        {
+        if (displayLoadingIcon) {
             ProgressIndicator progressIndicator = new ProgressIndicator();
             slide.getChildren().add(progressIndicator);
         }

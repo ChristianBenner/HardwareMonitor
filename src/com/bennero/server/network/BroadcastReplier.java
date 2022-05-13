@@ -45,11 +45,11 @@ import static com.bennero.common.networking.NetworkUtils.*;
 import static com.bennero.server.Version.*;
 
 /**
- * BroadcastReplyThread is a thread that runs concurrent to the Hardware Monitor user interface. It is designed to reply
+ * BroadcastReplier is a thread that runs concurrent to the Hardware Monitor user interface. It is designed to reply
  * to any broadcast messages sent by Hardware Monitor editors on the same network, therefor it listens to the broadcast
  * address. A specific random key is verified to ensure that the broadcast message came from a hardware monitor editor
  * and not another unrelated device on the network.
- *
+ * <p>
  * Once a verified hardware monitor editor broadcast message has been received, the thread will attempt to send a
  * response back using the provided IP address. That response will contain some useful data for the hardware monitor
  * editor such as the version of the hardware monitor, hostname, MAC address and the IP4 address (therefor the
@@ -57,64 +57,61 @@ import static com.bennero.server.Version.*;
  * also contains a specific random key so that the editor can verify it is receiving communication from a hardware
  * monitor and not an unrelated device on the network.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-class BroadcastReplyThread implements Runnable
-{
+class BroadcastReplier implements Runnable {
     // Class name used in logging
-    private static final String CLASS_NAME = BroadcastReplyThread.class.getName();
+    private static final String CLASS_NAME = BroadcastReplier.class.getSimpleName();
 
     private AddressInformation siteLocalAddressInformation;
+    private boolean reply;
+    private DatagramChannel datagramChannel;
 
-    public BroadcastReplyThread(AddressInformation siteLocalAddressInformation)
-    {
+    public BroadcastReplier(AddressInformation siteLocalAddressInformation) {
         this.siteLocalAddressInformation = siteLocalAddressInformation;
+        reply = true;
+    }
+
+    public void stop() {
+        reply = false;
+        try {
+            datagramChannel.socket().close();
+            datagramChannel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void run()
-    {
-        DatagramChannel datagramChannel = null;
-
-        try
-        {
+    public void run() {
+        try {
             datagramChannel = DatagramChannel.open();
             datagramChannel.socket().bind(new InetSocketAddress(BROADCAST_RECEIVE_PORT));
-            while (true)
-            {
+
+            while (reply) {
                 ByteBuffer buf = ByteBuffer.allocate(MESSAGE_NUM_BYTES);
                 buf.clear();
                 datagramChannel.receive(buf);
 
                 byte[] bytes = buf.array();
-                if (bytes[MESSAGE_TYPE_POS] == MessageType.BROADCAST_MESSAGE)
-                {
+                if (bytes[MESSAGE_TYPE_POS] == MessageType.BROADCAST_MESSAGE) {
                     BroadcastMessage broadcastMessage = BroadcastMessage.processBroadcastMessageData(bytes);
-                    if (broadcastMessage.isVerifiedBroadcastMessage())
-                    {
+                    if (broadcastMessage.isVerifiedBroadcastMessage()) {
                         writeBroadcastReplyMessage(broadcastMessage.getIp4Address());
                     }
                 }
             }
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             Logger.log(LogLevel.ERROR, CLASS_NAME,
                     "Failed to open datagram channel to receive broadcast messages");
             Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
-        }
-        finally
-        {
-            if (datagramChannel != null && datagramChannel.isOpen())
-            {
-                try
-                {
+        } finally {
+            if (datagramChannel != null && datagramChannel.isOpen()) {
+                try {
                     datagramChannel.close();
-                }
-                catch (IOException e)
-                {
+                } catch (IOException e) {
                     Logger.log(LogLevel.ERROR, CLASS_NAME,
                             "Failed to close broadcast message receiver datagram channel");
                     Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
@@ -123,11 +120,9 @@ class BroadcastReplyThread implements Runnable
         }
     }
 
-    private void writeBroadcastReplyMessage(byte[] ip4Address)
-    {
+    private void writeBroadcastReplyMessage(byte[] ip4Address) {
         // Create a socket, and send a broadcast reply message
-        try
-        {
+        try {
             Socket socket = new Socket(InetAddress.getByAddress(ip4Address), Constants.BROADCAST_REPLY_PORT);
             PrintStream broadcastReplyWriter = new PrintStream(socket.getOutputStream(), true);
 
@@ -146,9 +141,7 @@ class BroadcastReplyThread implements Runnable
 
             Logger.log(LogLevel.DEBUG, CLASS_NAME, "Sent broadcast acknowledgement to editor: " +
                     InetAddress.getByAddress(ip4Address));
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to send broadcast reply message");
             Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
         }

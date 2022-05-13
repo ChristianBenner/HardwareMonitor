@@ -28,7 +28,7 @@
     -fx-background-color: transparent;
 }
 
-#hw-welcome-page-pane{
+#hw-welcome-page-pane {
     -fx-background-color: -hw-bg;
 }
 
@@ -143,22 +143,21 @@
 
 #hw-spinner .increment-arrow-button:hover,
 #hw-spinner .decrement-arrow-button:hover {
-     -fx-background-color: derive(-hw-button-bg, 20.0%);
-     -fx-cursor: hand;
- }
+    -fx-background-color: derive(-hw-button-bg, 20.0%);
+    -fx-cursor: hand;
+}
 
- #hw-spinner .increment-arrow-button:pressed,
- #hw-spinner .decrement-arrow-button:pressed,
- #hw-spinner .increment-arrow-button:hover:pressed,
- #hw-spinner .decrement-arrow-button:hover:pressed {
-     -fx-background-color: derive(-hw-button-bg, -10.0%);
-     -fx-cursor: hand;
- }
+#hw-spinner .increment-arrow-button:pressed,
+#hw-spinner .decrement-arrow-button:pressed,
+#hw-spinner .increment-arrow-button:hover:pressed,
+#hw-spinner .decrement-arrow-button:hover:pressed {
+    -fx-background-color: derive(-hw-button-bg, -10.0%);
+    -fx-cursor: hand;
+}
 
- #hw-network-connection-failed-label
- {
-     -fx-text-fill: #FF0000;
- }
+#hw-network-connection-failed-label {
+    -fx-text-fill: #FF0000;
+}
 
 .progress-indicator {
     -fx-progress-color: orange;

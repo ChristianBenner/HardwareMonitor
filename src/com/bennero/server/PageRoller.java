@@ -33,8 +33,7 @@ import javafx.application.Platform;
 import java.util.ArrayList;
 import java.util.List;
 
-class PageRoller implements Runnable
-{
+class PageRoller implements Runnable {
     // Tag for logging
     private static final String CLASS_NAME = PageRoller.class.getSimpleName();
 
@@ -45,41 +44,32 @@ class PageRoller implements Runnable
 
     private long pageViewStartTimeMs = 0;
 
-    public PageRoller(ApplicationCore applicationCore)
-    {
+    public PageRoller(ApplicationCore applicationCore) {
         this.applicationCore = applicationCore;
         this.customisableSensorPages = new ArrayList<>();
         this.currentCustomisableSensorPage = null;
     }
 
-    public void addPage(CustomisableSensorPage page)
-    {
+    public void addPage(CustomisableSensorPage page) {
         customisableSensorPages.add(page);
     }
 
-    public boolean removePage(byte pageId)
-    {
+    public boolean removePage(byte pageId) {
         boolean exists = false;
 
-        for (int i = 0; i < customisableSensorPages.size() && !exists; i++)
-        {
-            if (customisableSensorPages.get(i).getUniqueId() == pageId)
-            {
+        for (int i = 0; i < customisableSensorPages.size() && !exists; i++) {
+            if (customisableSensorPages.get(i).getUniqueId() == pageId) {
                 customisableSensorPages.remove(i);
                 exists = true;
 
-                if (currentCustomisableSensorPage.getUniqueId() == pageId)
-                {
+                if (currentCustomisableSensorPage.getUniqueId() == pageId) {
                     applicationCore.removePage(currentCustomisableSensorPage);
 
-                    if(customisableSensorPages.size() == 0)
-                    {
+                    if (customisableSensorPages.size() == 0) {
                         applicationCore.displayConnectedPage();
                         currentCustomisableSensorPage = null;
                         previousCustomisableSensorPage = null;
-                    }
-                    else
-                    {
+                    } else {
                         applicationCore.displayPage(previousCustomisableSensorPage, null);
                         currentCustomisableSensorPage = previousCustomisableSensorPage;
                     }
@@ -90,14 +80,11 @@ class PageRoller implements Runnable
         return exists;
     }
 
-    public boolean updatePage(PageData pageData)
-    {
+    public boolean updatePage(PageData pageData) {
         boolean exists = false;
 
-        for (int i = 0; i < customisableSensorPages.size() && !exists; i++)
-        {
-            if (customisableSensorPages.get(i).getPageData().getUniqueId() == pageData.getUniqueId())
-            {
+        for (int i = 0; i < customisableSensorPages.size() && !exists; i++) {
+            if (customisableSensorPages.get(i).getPageData().getUniqueId() == pageData.getUniqueId()) {
                 exists = true;
 
                 customisableSensorPages.get(i).updatePageData(pageData);
@@ -107,15 +94,12 @@ class PageRoller implements Runnable
         return exists;
     }
 
-    public boolean addSensor(byte pageId, Sensor sensor)
-    {
+    public boolean addSensor(byte pageId, Sensor sensor) {
         boolean pageExists = false;
 
         // See if the page ID exists in the list of pages
-        for (int i = 0; i < customisableSensorPages.size() && !pageExists; i++)
-        {
-            if ((byte) customisableSensorPages.get(i).getUniqueId() == pageId)
-            {
+        for (int i = 0; i < customisableSensorPages.size() && !pageExists; i++) {
+            if ((byte) customisableSensorPages.get(i).getUniqueId() == pageId) {
                 // Add sensor to the page
                 customisableSensorPages.get(i).addSensor(sensor);
                 pageExists = true;
@@ -125,15 +109,12 @@ class PageRoller implements Runnable
         return pageExists;
     }
 
-    public void removeSensor(byte sensorId, byte pageId)
-    {
+    public void removeSensor(byte sensorId, byte pageId) {
         // Find the page
         boolean found = false;
 
-        for (int i = 0; i < customisableSensorPages.size() && !found; i++)
-        {
-            if (customisableSensorPages.get(i).getUniqueId() == pageId)
-            {
+        for (int i = 0; i < customisableSensorPages.size() && !found; i++) {
+            if (customisableSensorPages.get(i).getUniqueId() == pageId) {
                 found = true;
                 customisableSensorPages.get(i).removeSensor(sensorId);
             }
@@ -145,62 +126,47 @@ class PageRoller implements Runnable
                                 byte row,
                                 byte column,
                                 byte rowSpan,
-                                byte columnSpan)
-    {
+                                byte columnSpan) {
         // Find the page
         boolean found = false;
 
-        for(int i = 0; i < customisableSensorPages.size() && !found; i++)
-        {
-            if(customisableSensorPages.get(i).getUniqueId() == pageId)
-            {
+        for (int i = 0; i < customisableSensorPages.size() && !found; i++) {
+            if (customisableSensorPages.get(i).getUniqueId() == pageId) {
                 found = true;
                 customisableSensorPages.get(i).transformSensor(sensorId, row, column, rowSpan, columnSpan);
             }
         }
     }
 
-    public void removeAllPages()
-    {
+    public void removeAllPages() {
         customisableSensorPages.clear();
         currentCustomisableSensorPage = null;
         previousCustomisableSensorPage = null;
     }
 
     @Override
-    public void run()
-    {
-        while (true)
-        {
-            if (currentCustomisableSensorPage == null)
-            {
+    public void run() {
+        while (true) {
+            if (currentCustomisableSensorPage == null) {
                 // Find the lowest ID page in the list and set that to the current page
-                for (int i = 0; i < customisableSensorPages.size(); i++)
-                {
-                    if (currentCustomisableSensorPage == null || customisableSensorPages.get(i).getUniqueId() < currentCustomisableSensorPage.getUniqueId())
-                    {
+                for (int i = 0; i < customisableSensorPages.size(); i++) {
+                    if (currentCustomisableSensorPage == null || customisableSensorPages.get(i).getUniqueId() < currentCustomisableSensorPage.getUniqueId()) {
                         currentCustomisableSensorPage = customisableSensorPages.get(i);
                         pageViewStartTimeMs = System.currentTimeMillis();
                     }
                 }
 
-                if (currentCustomisableSensorPage != null)
-                {
+                if (currentCustomisableSensorPage != null) {
                     Platform.runLater(() -> applicationCore.displayPage(currentCustomisableSensorPage, null));
                 }
-            }
-            else
-            {
+            } else {
                 if (currentCustomisableSensorPage.getDurationMs() != 0 && currentCustomisableSensorPage.getNextPageId() != currentCustomisableSensorPage.getUniqueId() &&
-                        pageViewStartTimeMs + currentCustomisableSensorPage.getDurationMs() < System.currentTimeMillis())
-                {
+                        pageViewStartTimeMs + currentCustomisableSensorPage.getDurationMs() < System.currentTimeMillis()) {
                     boolean found = false;
 
                     // Find page in list
-                    for (int i = 0; i < customisableSensorPages.size() && !found; i++)
-                    {
-                        if (customisableSensorPages.get(i).getUniqueId() == currentCustomisableSensorPage.getNextPageId())
-                        {
+                    for (int i = 0; i < customisableSensorPages.size() && !found; i++) {
+                        if (customisableSensorPages.get(i).getUniqueId() == currentCustomisableSensorPage.getNextPageId()) {
                             found = true;
 
                             // Show the next page
@@ -215,12 +181,9 @@ class PageRoller implements Runnable
                 }
             }
 
-            try
-            {
+            try {
                 Thread.sleep(100);
-            }
-            catch (InterruptedException e)
-            {
+            } catch (InterruptedException e) {
                 Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to sleep thread");
                 Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
             }

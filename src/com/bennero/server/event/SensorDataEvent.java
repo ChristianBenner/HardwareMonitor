@@ -30,29 +30,25 @@ import javafx.event.Event;
  * SensorDataEvent creates an event that is used to provide a SensorDataMessage object back to a listener through an
  * EventHandler
  *
- * @see         SensorDataMessage
- * @see         Event
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see SensorDataMessage
+ * @see Event
+ * @since 1.0
  */
-public class SensorDataEvent extends Event
-{
+public class SensorDataEvent extends Event {
     private final SensorDataMessage sensorDataMessage;
 
-    public SensorDataEvent(final SensorDataMessage sensorDataMessage)
-    {
+    public SensorDataEvent(final SensorDataMessage sensorDataMessage) {
         super(sensorDataMessage, null, null);
         this.sensorDataMessage = sensorDataMessage;
     }
 
-    public byte getSensorId()
-    {
+    public byte getSensorId() {
         return sensorDataMessage.getSensorId();
     }
 
-    public float getValue()
-    {
+    public float getValue() {
         return sensorDataMessage.getValue();
     }
 }

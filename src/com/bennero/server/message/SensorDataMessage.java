@@ -32,35 +32,30 @@ import static com.bennero.common.networking.NetworkUtils.readFloat;
  * is updated it is updated across all pages). The message is sent by a connected client only and contains the new value
  * for the sensor, and the ID of the sensor.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class SensorDataMessage
-{
+public class SensorDataMessage {
     private byte sensorId;
     private float value;
 
-    private SensorDataMessage(byte sensorId, float value)
-    {
+    private SensorDataMessage(byte sensorId, float value) {
         this.sensorId = sensorId;
         this.value = value;
     }
 
-    public static SensorDataMessage processSensorDataMessage(byte[] bytes)
-    {
+    public static SensorDataMessage processSensorDataMessage(byte[] bytes) {
         final int sensorId = bytes[SensorValueDataPositions.ID_POS] & 0xFF;
         final float value = readFloat(bytes, SensorValueDataPositions.VALUE_POS);
         return new SensorDataMessage((byte) sensorId, value);
     }
 
-    public byte getSensorId()
-    {
+    public byte getSensorId() {
         return sensorId;
     }
 
-    public float getValue()
-    {
+    public float getValue() {
         return value;
     }
 }

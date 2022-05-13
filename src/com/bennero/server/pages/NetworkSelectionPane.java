@@ -28,45 +28,35 @@ import com.bennero.common.logging.Logger;
 import com.bennero.common.networking.DiscoveredNetwork;
 import com.bennero.common.networking.DiscoveredNetworkList;
 import com.bennero.common.networking.NetworkUtils;
-import com.bennero.server.ApplicationCore;
 import com.bennero.server.event.NetworkConnectionEntryEvent;
-import com.bennero.server.event.PageSetupEvent;
-import com.bennero.server.message.PageSetupMessage;
-import com.bennero.server.network.ConnectionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-
-import java.util.ArrayList;
 
 /**
  * Network selection pane is a class that will present a list of available networks. This is so that the user of the
  * hardware monitor does not have to exit the application in order to connect to a Wi-Fi network (as the hardware
  * monitor in many cases may be used without a OS GUI, connecting to Wi-Fi may be quite difficult for some users)
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class NetworkSelectionPane extends BorderPane
-{
+public class NetworkSelectionPane extends BorderPane {
     private static final String CLASS_NAME = NetworkSelectionPane.class.getName();
-
-    private DiscoveredNetworkList discoveredNetworks;
     private final EventHandler<NetworkConnectionEntryEvent> networkConnectionEntryEventHandler;
+    private DiscoveredNetworkList discoveredNetworks;
     private BorderPane sensorOverview;
     private ListView<DiscoveredNetwork> ssidListView;
     private Button refreshButton;
     private Button selectButton;
 
     public NetworkSelectionPane(final DiscoveredNetworkList discoveredNetworks,
-                                final EventHandler<NetworkConnectionEntryEvent> networkConnectionEntryEventHandler)
-    {
+                                final EventHandler<NetworkConnectionEntryEvent> networkConnectionEntryEventHandler) {
         this.discoveredNetworks = discoveredNetworks;
         this.networkConnectionEntryEventHandler = networkConnectionEntryEventHandler;
 
@@ -107,44 +97,34 @@ public class NetworkSelectionPane extends BorderPane
         title.setId("pane-title");
     }
 
-    private void addNetworksToList(final DiscoveredNetworkList discoveredNetworks)
-    {
+    private void addNetworksToList(final DiscoveredNetworkList discoveredNetworks) {
         // If there are multiple devices, include the device name in the string
         boolean includeDeviceName = discoveredNetworks.getNumberOfDevices() > 1;
 
-        for(int i = 0; i < discoveredNetworks.size(); i++)
-        {
+        for (int i = 0; i < discoveredNetworks.size(); i++) {
             discoveredNetworks.get(i).setIncludeDeviceStr(includeDeviceName);
             ssidListView.getItems().add(discoveredNetworks.get(i));
         }
     }
 
-    private void connectToNetwork(final DiscoveredNetwork discoveredNetwork)
-    {
+    private void connectToNetwork(final DiscoveredNetwork discoveredNetwork) {
         if (discoveredNetwork != null && discoveredNetwork.getNetworkDevice() != null &&
                 discoveredNetwork.getNetworkSsid() != null && !discoveredNetwork.getNetworkDevice().isEmpty() &&
-                !discoveredNetwork.getNetworkSsid().isEmpty())
-        {
+                !discoveredNetwork.getNetworkSsid().isEmpty()) {
             networkConnectionEntryEventHandler.handle(new NetworkConnectionEntryEvent(discoveredNetwork));
-        }
-        else
-        {
+        } else {
             Logger.log(LogLevel.ERROR, CLASS_NAME,
                     "Failed to connect to network due to invalid or empty selection from the network list");
         }
     }
 
-    private void refreshNetworkList()
-    {
+    private void refreshNetworkList() {
         discoveredNetworks.clear();
         ssidListView.getItems().clear();
-        try
-        {
+        try {
             discoveredNetworks.addAll(NetworkUtils.getWirelessNetworks());
             addNetworksToList(discoveredNetworks);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             Logger.log(LogLevel.ERROR, CLASS_NAME,
                     "Failed to refresh network list due to error in obtaining the available wireless networks");
             Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());

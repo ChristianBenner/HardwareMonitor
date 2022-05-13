@@ -36,18 +36,15 @@ import javafx.event.Event;
  * @see Event
  * @since 1.0
  */
-public class RemovePageEvent extends Event
-{
+public class RemovePageEvent extends Event {
     private final RemovePageMessage removePageMessage;
 
-    public RemovePageEvent(final RemovePageMessage removePageMessage)
-    {
+    public RemovePageEvent(final RemovePageMessage removePageMessage) {
         super(removePageMessage, null, null);
         this.removePageMessage = removePageMessage;
     }
 
-    public byte getPageId()
-    {
+    public byte getPageId() {
         return removePageMessage.getPageId();
     }
 }

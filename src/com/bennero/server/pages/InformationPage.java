@@ -32,24 +32,20 @@ import javafx.scene.layout.VBox;
 /**
  * A page that displays configurable information/text
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class InformationPage extends StackPane
-{
-    public InformationPage(String title, String info)
-    {
+public class InformationPage extends StackPane {
+    public InformationPage(String title, String info) {
         init(title, info);
     }
 
-    public InformationPage(String title)
-    {
+    public InformationPage(String title) {
         init(title, null);
     }
 
-    private void init(String title, String info)
-    {
+    private void init(String title, String info) {
         super.setId("standard-pane");
         VBox slide = new VBox();
         slide.setSpacing(5.0);
@@ -59,8 +55,7 @@ public class InformationPage extends StackPane
         slide.setAlignment(Pos.CENTER);
         slide.getChildren().add(titleLabel);
 
-        if (info != null)
-        {
+        if (info != null) {
             Label infoLabel = new Label(info);
             infoLabel.setId("hw-welcome-page-subtitle");
             slide.getChildren().add(infoLabel);

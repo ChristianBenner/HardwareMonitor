@@ -22,9 +22,9 @@
 /**
  * Module info defines the modules required by the Hardware Monitor project
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
 module HardwareMonitor
 {

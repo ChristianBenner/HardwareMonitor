@@ -35,12 +35,11 @@ import static com.bennero.common.networking.NetworkUtils.readString;
  * version of the client, its IP4 address (so that the server can communicate with it on its approval/rejection of
  * connection), and its hostname.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class ConnectionRequestMessage
-{
+public class ConnectionRequestMessage {
     private final byte majorVersion;
     private final byte minorVersion;
     private final byte patchVersion;
@@ -53,8 +52,7 @@ public class ConnectionRequestMessage
                                      byte patchVersion,
                                      boolean forceConnection,
                                      byte[] ip4Address,
-                                     String hostname)
-    {
+                                     String hostname) {
         this.majorVersion = majorVersion;
         this.minorVersion = minorVersion;
         this.patchVersion = patchVersion;
@@ -63,8 +61,7 @@ public class ConnectionRequestMessage
         this.hostname = hostname;
     }
 
-    public static ConnectionRequestMessage processConnectionRequestMessageData(byte[] bytes)
-    {
+    public static ConnectionRequestMessage processConnectionRequestMessageData(byte[] bytes) {
         final int majorVersion = bytes[ConnectionRequestDataPositions.MAJOR_VERSION_POS] & 0xFF;
         final int minorVersion = bytes[ConnectionRequestDataPositions.MINOR_VERSION_POS] & 0xFF;
         final int patchVersion = bytes[ConnectionRequestDataPositions.PATCH_VERSION_POS] & 0xFF;
@@ -77,33 +74,27 @@ public class ConnectionRequestMessage
                 ip4Address, hostname);
     }
 
-    public byte getMajorVersion()
-    {
+    public byte getMajorVersion() {
         return majorVersion;
     }
 
-    public byte getMinorVersion()
-    {
+    public byte getMinorVersion() {
         return minorVersion;
     }
 
-    public byte getPatchVersion()
-    {
+    public byte getPatchVersion() {
         return patchVersion;
     }
 
-    public boolean isForceConnection()
-    {
+    public boolean isForceConnection() {
         return forceConnection;
     }
 
-    public byte[] getIp4Address()
-    {
+    public byte[] getIp4Address() {
         return ip4Address;
     }
 
-    public String getHostname()
-    {
+    public String getHostname() {
         return hostname;
     }
 }

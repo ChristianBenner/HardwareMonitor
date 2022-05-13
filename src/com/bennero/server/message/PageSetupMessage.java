@@ -36,21 +36,18 @@ import static com.bennero.common.networking.NetworkUtils.readString;
  * only. If a PageSetupMessage is received but the ID of the page already exists, the page with that ID will be
  * updated with the new information (allowing to change of attributes such as page colour, titles etc).
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class PageSetupMessage
-{
+public class PageSetupMessage {
     private PageData pageData;
 
-    private PageSetupMessage(PageData pageData)
-    {
+    private PageSetupMessage(PageData pageData) {
         this.pageData = pageData;
     }
 
-    public static PageSetupMessage readPageSetupMessage(byte[] bytes)
-    {
+    public static PageSetupMessage readPageSetupMessage(byte[] bytes) {
         final int pageId = bytes[PageDataPositions.ID_POS] & 0xFF;
         final int pageColourR = bytes[PageDataPositions.COLOUR_R_POS] & 0xFF;
         final int pageColourG = bytes[PageDataPositions.COLOUR_G_POS] & 0xFF;
@@ -86,8 +83,7 @@ public class PageSetupMessage
         return new PageSetupMessage(pageData);
     }
 
-    public PageData getPageData()
-    {
+    public PageData getPageData() {
         return pageData;
     }
 }

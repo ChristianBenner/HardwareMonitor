@@ -30,12 +30,11 @@ import com.bennero.common.messages.SensorTransformationPositions;
  * by a connected client only. A given existing sensor will be relocated to a stated position on a specified page. The
  * message also includes information for the row and column spans allowing it to control the size.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class SensorTransformationMessage
-{
+public class SensorTransformationMessage {
     private byte sensorId;
     private byte pageId;
     private byte row;
@@ -48,8 +47,7 @@ public class SensorTransformationMessage
                                         byte row,
                                         byte column,
                                         byte rowSpan,
-                                        byte columnSpan)
-    {
+                                        byte columnSpan) {
         this.sensorId = sensorId;
         this.pageId = pageId;
         this.row = row;
@@ -58,8 +56,7 @@ public class SensorTransformationMessage
         this.columnSpan = columnSpan;
     }
 
-    public static SensorTransformationMessage processSensorTransformationMessage(byte[] bytes)
-    {
+    public static SensorTransformationMessage processSensorTransformationMessage(byte[] bytes) {
         final byte sensorId = bytes[SensorTransformationPositions.ID_POS];
         final byte pageId = bytes[SensorTransformationPositions.PAGE_ID_POS];
         final byte row = bytes[SensorTransformationPositions.ROW_POS];
@@ -70,33 +67,27 @@ public class SensorTransformationMessage
         return new SensorTransformationMessage(sensorId, pageId, row, column, rowSpan, columnSpan);
     }
 
-    public byte getSensorId()
-    {
+    public byte getSensorId() {
         return sensorId;
     }
 
-    public byte getPageId()
-    {
+    public byte getPageId() {
         return pageId;
     }
 
-    public byte getRow()
-    {
+    public byte getRow() {
         return row;
     }
 
-    public byte getColumn()
-    {
+    public byte getColumn() {
         return column;
     }
 
-    public byte getRowSpan()
-    {
+    public byte getRowSpan() {
         return rowSpan;
     }
 
-    public byte getColumnSpan()
-    {
+    public byte getColumnSpan() {
         return columnSpan;
     }
 }

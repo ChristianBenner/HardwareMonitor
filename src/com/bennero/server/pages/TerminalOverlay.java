@@ -33,14 +33,12 @@ import javafx.util.Duration;
  * TerminalOverlay is a developer/debug only class used to show logging information over the top of the hardware
  * monitor interface. It is useful for debugging the application whilst in fullscreen mode or on systems with no OS GUI
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class TerminalOverlay extends TextArea
-{
-    public TerminalOverlay()
-    {
+public class TerminalOverlay extends TextArea {
+    public TerminalOverlay() {
         // Create terminal UI
         setId("hw-debug-terminal");
         setWrapText(true);

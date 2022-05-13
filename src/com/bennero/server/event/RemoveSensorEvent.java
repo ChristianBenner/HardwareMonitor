@@ -30,29 +30,25 @@ import javafx.event.Event;
  * RemoveSensorEvent creates an event that is used to provide a RemoveSensorMessage object back to a listener through an
  * EventHandler
  *
- * @see         RemoveSensorMessage
- * @see         Event
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see RemoveSensorMessage
+ * @see Event
+ * @since 1.0
  */
-public class RemoveSensorEvent extends Event
-{
+public class RemoveSensorEvent extends Event {
     private final RemoveSensorMessage removeSensorMessage;
 
-    public RemoveSensorEvent(final RemoveSensorMessage removeSensorMessage)
-    {
+    public RemoveSensorEvent(final RemoveSensorMessage removeSensorMessage) {
         super(removeSensorMessage, null, null);
         this.removeSensorMessage = removeSensorMessage;
     }
 
-    public byte getSensorId()
-    {
+    public byte getSensorId() {
         return removeSensorMessage.getSensorId();
     }
 
-    public byte getPageId()
-    {
+    public byte getPageId() {
         return removeSensorMessage.getPageId();
     }
 }

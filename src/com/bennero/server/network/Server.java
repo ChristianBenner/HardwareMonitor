@@ -23,7 +23,6 @@
 
 package com.bennero.server.network;
 
-import com.bennero.common.Sensor;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import com.bennero.common.networking.AddressInformation;
@@ -36,6 +35,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.bennero.common.Constants.PORT;
 
@@ -46,12 +47,11 @@ import static com.bennero.common.Constants.PORT;
  * the current circumstances e.g. if the server is already being controlled or if the editor is out of date then the
  * server can reject the connection request with a response that contains this rejection reason.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class Server implements Runnable
-{
+public class Server implements Runnable {
     // Class name used in logging
     private static final String CLASS_NAME = Server.class.getName();
 
@@ -66,9 +66,14 @@ public class Server implements Runnable
     private EventHandler<SensorTransformationEvent> sensorTransformationMessageReceived;
 
     private SynchronizedConnection activeConnection;
+
+    private BroadcastReplier broadcastReplier;
     private Thread broadcastReplyThread;
+
     private HeartbeatSender heartbeatSender;
     private Thread heartbeatSenderThread;
+
+    private boolean acceptConnections;
 
     public Server(AddressInformation siteLocalAddressInformation,
                   EventHandler connectedEvent,
@@ -78,8 +83,7 @@ public class Server implements Runnable
                   EventHandler<RemovePageEvent> removePageMessageReceived,
                   EventHandler<SensorDataEvent> sensorDataMessageReceived,
                   EventHandler<RemoveSensorEvent> removeSensorMessageReceived,
-                  EventHandler<SensorTransformationEvent> sensorTransformationMessageReceived)
-    {
+                  EventHandler<SensorTransformationEvent> sensorTransformationMessageReceived) {
         this.siteLocalAddressInformation = siteLocalAddressInformation;
         this.connectedEvent = connectedEvent;
         this.disconnectedEvent = disconnectedEvent;
@@ -90,12 +94,17 @@ public class Server implements Runnable
         this.removeSensorMessageReceived = removeSensorMessageReceived;
         this.sensorTransformationMessageReceived = sensorTransformationMessageReceived;
         activeConnection = new SynchronizedConnection();
+        acceptConnections = true;
+    }
+
+    public void disconnectActiveConnection() throws InterruptedException {
+        activeConnection.stop();
     }
 
     @Override
-    public void run()
-    {
-        broadcastReplyThread = new Thread(new BroadcastReplyThread(siteLocalAddressInformation));
+    public void run() {
+        broadcastReplier = new BroadcastReplier(siteLocalAddressInformation);
+        broadcastReplyThread = new Thread(broadcastReplier);
         broadcastReplyThread.start();
 
         heartbeatSender = new HeartbeatSender(activeConnection);
@@ -103,15 +112,12 @@ public class Server implements Runnable
         heartbeatSenderThread.start();
 
         ServerSocketChannel serverSocketChannel = null;
-        try
-        {
+        try {
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(true);
             serverSocketChannel.socket().bind(new InetSocketAddress(PORT));
 
-            boolean connect = true;
-            while (connect)
-            {
+            while (acceptConnections) {
                 SocketChannel socketChannel = serverSocketChannel.accept();
 
                 // Connected event we should re-route the events to the caller of server
@@ -123,20 +129,14 @@ public class Server implements Runnable
                 Thread thread = new Thread(connection);
                 thread.start();
             }
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             Logger.log(LogLevel.ERROR, CLASS_NAME, "Server connection ended unexpectedly");
             Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
 
-            if (serverSocketChannel != null)
-            {
-                try
-                {
+            if (serverSocketChannel != null) {
+                try {
                     serverSocketChannel.close();
-                }
-                catch (IOException ex)
-                {
+                } catch (IOException ex) {
                     Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to close the server socket channel");
                     Logger.log(LogLevel.DEBUG, CLASS_NAME, ex.getMessage());
                 }

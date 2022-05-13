@@ -25,18 +25,15 @@ package com.bennero.server.network;
 
 import javafx.event.Event;
 
-public class ConnectionEvent extends Event
-{
+public class ConnectionEvent extends Event {
     private String networkSSID;
 
-    public ConnectionEvent(String networkSSID)
-    {
+    public ConnectionEvent(String networkSSID) {
         super(networkSSID, null, null);
         this.networkSSID = networkSSID;
     }
 
-    public String getNetworkSSID()
-    {
+    public String getNetworkSSID() {
         return networkSSID;
     }
 }

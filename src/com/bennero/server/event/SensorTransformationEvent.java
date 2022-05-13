@@ -30,49 +30,41 @@ import javafx.event.Event;
  * SensorTransformationEvent creates an event that is used to provide a SensorTransformationMessage object back to a
  * listener through an EventHandler
  *
- * @see         SensorTransformationMessage
- * @see         Event
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see SensorTransformationMessage
+ * @see Event
+ * @since 1.0
  */
-public class SensorTransformationEvent extends Event
-{
+public class SensorTransformationEvent extends Event {
     private final SensorTransformationMessage sensorTransformationMessage;
 
-    public SensorTransformationEvent(final SensorTransformationMessage sensorTransformationMessage)
-    {
+    public SensorTransformationEvent(final SensorTransformationMessage sensorTransformationMessage) {
         super(sensorTransformationMessage, null, null);
         this.sensorTransformationMessage = sensorTransformationMessage;
     }
 
-    public byte getSensorId()
-    {
+    public byte getSensorId() {
         return sensorTransformationMessage.getSensorId();
     }
 
-    public byte getPageId()
-    {
+    public byte getPageId() {
         return sensorTransformationMessage.getPageId();
     }
 
-    public byte getRow()
-    {
+    public byte getRow() {
         return sensorTransformationMessage.getRow();
     }
 
-    public byte getColumn()
-    {
+    public byte getColumn() {
         return sensorTransformationMessage.getColumn();
     }
 
-    public byte getRowSpan()
-    {
+    public byte getRowSpan() {
         return sensorTransformationMessage.getRowSpan();
     }
 
-    public byte getColumnSpan()
-    {
+    public byte getColumnSpan() {
         return sensorTransformationMessage.getColumnSpan();
     }
 }

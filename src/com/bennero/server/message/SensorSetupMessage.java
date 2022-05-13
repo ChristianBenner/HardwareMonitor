@@ -38,23 +38,20 @@ import static com.bennero.common.networking.NetworkUtils.*;
  * same page, it will be updated with the new information (allowing the change of attributes such as name, position,
  * max value, threshold values, row span and column span).
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class SensorSetupMessage
-{
+public class SensorSetupMessage {
     private Sensor sensor;
     private byte pageId;
 
-    private SensorSetupMessage(Sensor sensor, byte pageId)
-    {
+    private SensorSetupMessage(Sensor sensor, byte pageId) {
         this.sensor = sensor;
         this.pageId = pageId;
     }
 
-    public static SensorSetupMessage processSensorSetupMessage(byte[] bytes)
-    {
+    public static SensorSetupMessage processSensorSetupMessage(byte[] bytes) {
         final int sensorId = bytes[SensorDataPositions.ID_POS] & 0xFF;
         final byte pageId = bytes[SensorDataPositions.PAGE_ID_POS];
         final int row = bytes[SensorDataPositions.ROW_POS] & 0xFF;
@@ -75,96 +72,84 @@ public class SensorSetupMessage
         sensor.setValue(initialValue);
 
         // Only process each sensor colour if it is supported by the skin that has been received
-        if (SkinHelper.checkSupport(skin, Skin.FOREGROUND_BASE_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.FOREGROUND_BASE_COLOUR_SUPPORTED)) {
             final Color foregroundColour = Color.rgb(bytes[SensorDataPositions.FOREGROUND_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.FOREGROUND_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.FOREGROUND_COLOUR_B_POS] & 0xFF);
             sensor.setForegroundColour(foregroundColour);
         }
 
-        if (SkinHelper.checkSupport(skin, Skin.AVERAGE_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.AVERAGE_COLOUR_SUPPORTED)) {
             final Color averageColour = Color.rgb(bytes[SensorDataPositions.AVERAGE_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.AVERAGE_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.AVERAGE_COLOUR_B_POS] & 0xFF);
             sensor.setAverageColour(averageColour);
         }
 
-        if (SkinHelper.checkSupport(skin, Skin.NEEDLE_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.NEEDLE_COLOUR_SUPPORTED)) {
             final Color needleColour = Color.rgb(bytes[SensorDataPositions.NEEDLE_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.NEEDLE_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.NEEDLE_COLOUR_B_POS] & 0xFF);
             sensor.setNeedleColour(needleColour);
         }
 
-        if (SkinHelper.checkSupport(skin, Skin.VALUE_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.VALUE_COLOUR_SUPPORTED)) {
             final Color valueColour = Color.rgb(bytes[SensorDataPositions.VALUE_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.VALUE_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.VALUE_COLOUR_B_POS] & 0xFF);
             sensor.setValueColour(valueColour);
         }
 
-        if (SkinHelper.checkSupport(skin, Skin.UNIT_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.UNIT_COLOUR_SUPPORTED)) {
             final Color unitColour = Color.rgb(bytes[SensorDataPositions.UNIT_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.UNIT_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.UNIT_COLOUR_B_POS] & 0xFF);
             sensor.setUnitColour(unitColour);
         }
 
-        if (SkinHelper.checkSupport(skin, Skin.KNOB_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.KNOB_COLOUR_SUPPORTED)) {
             final Color knobColour = Color.rgb(bytes[SensorDataPositions.KNOB_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.KNOB_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.KNOB_COLOUR_B_POS] & 0xFF);
             sensor.setKnobColour(knobColour);
         }
 
-        if (SkinHelper.checkSupport(skin, Skin.BAR_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.BAR_COLOUR_SUPPORTED)) {
             final Color barColour = Color.rgb(bytes[SensorDataPositions.BAR_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.BAR_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.BAR_COLOUR_B_POS] & 0xFF);
             sensor.setBarColour(barColour);
         }
 
-        if (SkinHelper.checkSupport(skin, Skin.THRESHOLD_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.THRESHOLD_COLOUR_SUPPORTED)) {
             final Color thresholdColour = Color.rgb(bytes[SensorDataPositions.THRESHOLD_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.THRESHOLD_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.THRESHOLD_COLOUR_B_POS] & 0xFF);
             sensor.setThresholdColour(thresholdColour);
         }
 
-        if (SkinHelper.checkSupport(skin, Skin.TITLE_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.TITLE_COLOUR_SUPPORTED)) {
             final Color titleColour = Color.rgb(bytes[SensorDataPositions.TITLE_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.TITLE_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.TITLE_COLOUR_B_POS] & 0xFF);
             sensor.setTitleColour(titleColour);
         }
 
-        if (SkinHelper.checkSupport(skin, Skin.BAR_BACKGROUND_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.BAR_BACKGROUND_COLOUR_SUPPORTED)) {
             final Color barBackgroundColour = Color.rgb(bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_B_POS] & 0xFF);
             sensor.setBarBackgroundColour(barBackgroundColour);
         }
 
-        if (SkinHelper.checkSupport(skin, Skin.TICK_LABEL_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.TICK_LABEL_COLOUR_SUPPORTED)) {
             final Color tickLabelColour = Color.rgb(bytes[SensorDataPositions.TICK_LABEL_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.TICK_LABEL_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.TICK_LABEL_COLOUR_B_POS] & 0xFF);
             sensor.setTickLabelColour(tickLabelColour);
         }
 
-        if (SkinHelper.checkSupport(skin, Skin.TICK_MARK_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, Skin.TICK_MARK_COLOUR_SUPPORTED)) {
             final Color tickMarkColour = Color.rgb(bytes[SensorDataPositions.TICK_MARK_COLOUR_R_POS] & 0xFF,
                     bytes[SensorDataPositions.TICK_MARK_COLOUR_G_POS] & 0xFF,
                     bytes[SensorDataPositions.TICK_MARK_COLOUR_B_POS] & 0xFF);
@@ -174,13 +159,11 @@ public class SensorSetupMessage
         return new SensorSetupMessage(sensor, pageId);
     }
 
-    public Sensor getSensor()
-    {
+    public Sensor getSensor() {
         return sensor;
     }
 
-    public byte getPageId()
-    {
+    public byte getPageId() {
         return pageId;
     }
 }

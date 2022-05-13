@@ -44,13 +44,12 @@ import java.util.List;
  * layout, title, subtitle, sensor layouts etc. These page data are processed by the network components of the hardware
  * monitor (from received network messages)
  *
- * @see         PageData
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see PageData
+ * @since 1.0
  */
-public class CustomisableSensorPage extends StackPane implements PageTemplate
-{
+public class CustomisableSensorPage extends StackPane implements PageTemplate {
     private final static Insets PAGE_PADDING = new Insets(10, 10, 10, 10);
 
     private PageData pageData;
@@ -68,8 +67,7 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
 
     private Transition transitionControl;
 
-    public CustomisableSensorPage(PageData pageData)
-    {
+    public CustomisableSensorPage(PageData pageData) {
         this.pageData = pageData;
         super.setBackground(new Background(new BackgroundFill(pageData.getColour(), CornerRadii.EMPTY, Insets.EMPTY)));
 
@@ -88,23 +86,19 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
         super.getChildren().add(borderPane);
     }
 
-    public PageData getPageData()
-    {
+    public PageData getPageData() {
         return pageData;
     }
 
-    public Transition getTransitionControl()
-    {
+    public Transition getTransitionControl() {
         return this.transitionControl;
     }
 
-    public void setTransitionControl(Transition transitionControl)
-    {
+    public void setTransitionControl(Transition transitionControl) {
         this.transitionControl = transitionControl;
     }
 
-    protected void initGrid()
-    {
+    protected void initGrid() {
         placedSensors = new ArrayList<>();
         sensorPane = new GridPane();
         sensorPane.setPadding(new Insets(15, 15, 15, 15));
@@ -116,15 +110,13 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
         // Configure the grid pane cells to be of equal size
         RowConstraints rc = new RowConstraints();
         rc.setPercentHeight(100d / pageData.getRows());
-        for (int y = 0; y < pageData.getRows(); y++)
-        {
+        for (int y = 0; y < pageData.getRows(); y++) {
             sensorPane.getRowConstraints().add(rc);
         }
 
         ColumnConstraints cc = new ColumnConstraints();
         cc.setPercentWidth(100d / pageData.getColumns());
-        for (int x = 0; x < pageData.getColumns(); x++)
-        {
+        for (int x = 0; x < pageData.getColumns(); x++) {
             sensorPane.getColumnConstraints().add(cc);
         }
 
@@ -133,17 +125,14 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
         borderPane.setCenter(sensorPane);
     }
 
-    protected boolean isSpaceTaken(Sensor sensor)
-    {
+    protected boolean isSpaceTaken(Sensor sensor) {
         boolean taken = false;
 
         // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
+        for (int i = 0; i < placedSensors.size() && !taken; i++) {
             Sensor placedSensor = placedSensors.get(i);
 
-            if (placedSensor != sensor)
-            {
+            if (placedSensor != sensor) {
                 int startColumn = sensor.getColumn();
                 int endColumn = startColumn + sensor.getColumnSpan();
                 int startRow = sensor.getRow();
@@ -159,8 +148,7 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
                 boolean withinColumn = (startColumn >= placedStartColumn && startColumn < placedEndColumn) ||
                         (endColumn > placedStartColumn && endColumn <= placedEndColumn);
 
-                if (withinRow && withinColumn)
-                {
+                if (withinRow && withinColumn) {
                     taken = true;
                 }
             }
@@ -169,13 +157,10 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
         return taken;
     }
 
-    protected void placeSensors()
-    {
+    protected void placeSensors() {
         // Add sensors to page
-        for (Sensor sensor : pageData.getSensorList())
-        {
-            if (!isSpaceTaken(sensor))
-            {
+        for (Sensor sensor : pageData.getSensorList()) {
+            if (!isSpaceTaken(sensor)) {
                 placedSensors.add(sensor);
 
                 // This is required in the non-editor version
@@ -190,15 +175,12 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
         }
     }
 
-    public void initTitle()
-    {
-        if (pageData.isTitleEnabled())
-        {
+    public void initTitle() {
+        if (pageData.isTitleEnabled()) {
             titleBox = new HBox();
             titleLabel = new Label(pageData.getTitle());
             titleLabel.setFont(new Font(42));
-            switch (pageData.getTitleAlignment())
-            {
+            switch (pageData.getTitleAlignment()) {
                 case Constants.TEXT_ALIGNMENT_LEFT:
                     titleBox.setAlignment(Pos.CENTER_LEFT);
                     break;
@@ -215,15 +197,12 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
         }
     }
 
-    public void initSubtitle()
-    {
-        if (pageData.isSubtitleEnabled())
-        {
+    public void initSubtitle() {
+        if (pageData.isSubtitleEnabled()) {
             subtitleBox = new HBox();
             subtitleLabel = new Label(pageData.getSubtitle());
             subtitleLabel.setFont(new Font(28));
-            switch (pageData.getSubtitleAlignment())
-            {
+            switch (pageData.getSubtitleAlignment()) {
                 case Constants.TEXT_ALIGNMENT_LEFT:
                     subtitleBox.setAlignment(Pos.CENTER_LEFT);
                     break;
@@ -240,8 +219,7 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
         }
     }
 
-    public void updatePageData(PageData pageData)
-    {
+    public void updatePageData(PageData pageData) {
         setColour(pageData.getColour());
         setTitleColour(pageData.getTitleColour());
         setSubtitleColour(pageData.getSubtitleColour());
@@ -261,134 +239,110 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
     }
 
     @Override
-    public int getUniqueId()
-    {
+    public int getUniqueId() {
         return pageData.getUniqueId();
     }
 
     @Override
-    public void setUniqueId(int id)
-    {
+    public void setUniqueId(int id) {
         pageData.setUniqueId(id);
     }
 
     @Override
-    public Color getColour()
-    {
+    public Color getColour() {
         return pageData.getColour();
     }
 
     @Override
-    public void setColour(Color colour)
-    {
+    public void setColour(Color colour) {
         if (getColour().getRed() != colour.getRed() ||
                 getColour().getGreen() != colour.getGreen() ||
-                getColour().getBlue() != colour.getBlue())
-        {
+                getColour().getBlue() != colour.getBlue()) {
             pageData.setColour(colour);
             super.setBackground(new Background(new BackgroundFill(colour, CornerRadii.EMPTY, Insets.EMPTY)));
         }
     }
 
     @Override
-    public Color getTitleColour()
-    {
+    public Color getTitleColour() {
         return pageData.getTitleColour();
     }
 
     @Override
-    public void setTitleColour(Color colour)
-    {
+    public void setTitleColour(Color colour) {
         if (getTitleColour().getRed() != colour.getRed() ||
                 getTitleColour().getGreen() != colour.getGreen() ||
-                getTitleColour().getBlue() != colour.getBlue())
-        {
+                getTitleColour().getBlue() != colour.getBlue()) {
             pageData.setTitleColour(colour);
 
-            if (titleLabel != null)
-            {
+            if (titleLabel != null) {
                 titleLabel.setTextFill(colour);
             }
         }
     }
 
     @Override
-    public Color getSubtitleColour()
-    {
+    public Color getSubtitleColour() {
         return pageData.getSubtitleColour();
     }
 
     @Override
-    public void setSubtitleColour(Color colour)
-    {
+    public void setSubtitleColour(Color colour) {
         if (getSubtitleColour().getRed() != colour.getRed() ||
                 getSubtitleColour().getGreen() != colour.getGreen() ||
-                getSubtitleColour().getBlue() != colour.getBlue())
-        {
+                getSubtitleColour().getBlue() != colour.getBlue()) {
             pageData.setSubtitleColour(colour);
 
-            if (subtitleLabel != null)
-            {
+            if (subtitleLabel != null) {
                 subtitleLabel.setTextFill(colour);
             }
         }
     }
 
     @Override
-    public int getRows()
-    {
+    public int getRows() {
         return pageData.getRows();
     }
 
     @Override
-    public void setRows(int rows)
-    {
-        if (getRows() != rows)
-        {
+    public void setRows(int rows) {
+        if (getRows() != rows) {
             pageData.setRows(rows);
             initGrid();
         }
     }
 
     @Override
-    public int getColumns()
-    {
+    public int getColumns() {
         return pageData.getColumns();
     }
 
     @Override
-    public void setColumns(int columns)
-    {
-        if (getColumns() != columns)
-        {
+    public void setColumns(int columns) {
+        if (getColumns() != columns) {
             pageData.setColumns(columns);
             initGrid();
         }
     }
 
     @Override
-    public int getNextPageId()
-    {
+    public int getNextPageId() {
         return pageData.getNextPageId();
     }
 
     @Override
-    public void setNextPageId(int nextPageId)
-    {
+    public void setNextPageId(int nextPageId) {
         pageData.setNextPageId(nextPageId);
     }
 
     @Override
-    public int getTransitionType()
-    {
+    public int getTransitionType() {
         return pageData.getTransitionType();
     }
 
     @Override
-    public void setTransitionType(int transistionType)
-    {
-        if (getTransitionType() != transistionType)
-        {
+    public void setTransitionType(int transistionType) {
+        if (getTransitionType() != transistionType) {
             pageData.setTransitionType(transistionType);
 
             // todo: Re-init transition object
@@ -396,94 +350,76 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
     }
 
     @Override
-    public int getTransitionTime()
-    {
+    public int getTransitionTime() {
         return pageData.getTransitionTime();
     }
 
     @Override
-    public void setTransitionTime(int transitionTime)
-    {
+    public void setTransitionTime(int transitionTime) {
         pageData.setTransitionTime(transitionTime);
 
         // todo: Re-init transition object
     }
 
     @Override
-    public int getDurationMs()
-    {
+    public int getDurationMs() {
         return pageData.getDurationMs();
     }
 
     @Override
-    public void setDurationMs(int durationMs)
-    {
+    public void setDurationMs(int durationMs) {
         pageData.setDurationMs(durationMs);
     }
 
     @Override
-    public String getTitle()
-    {
+    public String getTitle() {
         return pageData.getTitle();
     }
 
     @Override
-    public void setTitle(String title)
-    {
-        if (getTitle() != title)
-        {
+    public void setTitle(String title) {
+        if (getTitle() != title) {
             pageData.setTitle(title);
             titleLabel.setText(title);
         }
     }
 
     @Override
-    public boolean isTitleEnabled()
-    {
+    public boolean isTitleEnabled() {
         return pageData.isTitleEnabled();
     }
 
     @Override
-    public void setTitleEnabled(boolean enabled)
-    {
-        if (isTitleEnabled() != enabled)
-        {
+    public void setTitleEnabled(boolean enabled) {
+        if (isTitleEnabled() != enabled) {
             pageData.setTitleEnabled(enabled);
 
-            if (enabled)
-            {
+            if (enabled) {
                 initTitle();
 
                 // To make sure that the sub-title appears below the title
-                if (isSubtitleEnabled())
-                {
+                if (isSubtitleEnabled()) {
                     removeSubtitle();
                     initSubtitle();
                 }
-            }
-            else
-            {
+            } else {
                 removeTitle();
             }
         }
     }
 
     @Override
-    public int getTitleAlignment()
-    {
+    public int getTitleAlignment() {
         return pageData.getTitleAlignment();
     }
 
     @Override
-    public void setTitleAlignment(int alignment)
-    {
-        if (getTitleAlignment() != alignment)
-        {
+    public void setTitleAlignment(int alignment) {
+        if (getTitleAlignment() != alignment) {
             pageData.setTitleAlignment(alignment);
 
             // Align the text
-            switch (alignment)
-            {
+            switch (alignment) {
                 case Constants.TEXT_ALIGNMENT_LEFT:
                     titleBox.setAlignment(Pos.CENTER_LEFT);
                     break;
@@ -498,61 +434,48 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
     }
 
     @Override
-    public String getSubtitle()
-    {
+    public String getSubtitle() {
         return pageData.getSubtitle();
     }
 
     @Override
-    public void setSubtitle(String subtitle)
-    {
-        if (subtitleLabel != null && getSubtitle() != subtitle)
-        {
+    public void setSubtitle(String subtitle) {
+        if (subtitleLabel != null && getSubtitle() != subtitle) {
             pageData.setSubtitle(subtitle);
             subtitleLabel.setText(subtitle);
         }
     }
 
     @Override
-    public boolean isSubtitleEnabled()
-    {
+    public boolean isSubtitleEnabled() {
         return pageData.isSubtitleEnabled();
     }
 
     @Override
-    public void setSubtitleEnabled(boolean subtitleEnabled)
-    {
-        if (isSubtitleEnabled() != subtitleEnabled)
-        {
+    public void setSubtitleEnabled(boolean subtitleEnabled) {
+        if (isSubtitleEnabled() != subtitleEnabled) {
             pageData.setSubtitleEnabled(subtitleEnabled);
 
-            if (subtitleEnabled)
-            {
+            if (subtitleEnabled) {
                 initSubtitle();
-            }
-            else
-            {
+            } else {
                 removeSubtitle();
             }
         }
     }
 
     @Override
-    public int getSubtitleAlignment()
-    {
+    public int getSubtitleAlignment() {
         return pageData.getSubtitleAlignment();
     }
 
     @Override
-    public void setSubtitleAlignment(int subtitleAlignment)
-    {
-        if (getSubtitleAlignment() != subtitleAlignment)
-        {
+    public void setSubtitleAlignment(int subtitleAlignment) {
+        if (getSubtitleAlignment() != subtitleAlignment) {
             pageData.setSubtitleAlignment(subtitleAlignment);
 
             // Align the text
-            switch (subtitleAlignment)
-            {
+            switch (subtitleAlignment) {
                 case Constants.TEXT_ALIGNMENT_LEFT:
                     subtitleBox.setAlignment(Pos.CENTER_LEFT);
                     break;
@@ -567,35 +490,29 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
     }
 
     @Override
-    public List<Sensor> getSensorList()
-    {
+    public List<Sensor> getSensorList() {
         return pageData.getSensorList();
     }
 
     @Override
-    public void addSensor(Sensor sensor)
-    {
+    public void addSensor(Sensor sensor) {
         pageData.addSensor(sensor);
         initGrid();
     }
 
     @Override
-    public void removeSensor(Sensor sensor)
-    {
+    public void removeSensor(Sensor sensor) {
         sensorPane.getChildren().remove(sensor);
         pageData.removeSensor(sensor);
         placedSensors.remove(sensor);
         initGrid();
     }
 
-    public void removeSensor(byte uniqueId)
-    {
+    public void removeSensor(byte uniqueId) {
         // Find sensor in the list
         boolean found = false;
-        for (int i = 0; i < placedSensors.size() && !found; i++)
-        {
-            if (placedSensors.get(i).getUniqueId() == uniqueId)
-            {
+        for (int i = 0; i < placedSensors.size() && !found; i++) {
+            if (placedSensors.get(i).getUniqueId() == uniqueId) {
                 found = true;
                 removeSensor(placedSensors.get(i));
             }
@@ -606,14 +523,11 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
                                 byte row,
                                 byte column,
                                 byte rowSpan,
-                                byte columnSpan)
-    {
+                                byte columnSpan) {
         // Find sensor in the list
         boolean found = false;
-        for (int i = 0; i < placedSensors.size() && !found; i++)
-        {
-            if (placedSensors.get(i).getUniqueId() == sensorId)
-            {
+        for (int i = 0; i < placedSensors.size() && !found; i++) {
+            if (placedSensors.get(i).getUniqueId() == sensorId) {
                 found = true;
 
                 Sensor sensor = placedSensors.get(i);
@@ -622,39 +536,33 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate
                 sensor.setColumnSpan(columnSpan);
 
                 sensorPane.getChildren().remove(sensor);
-                GridPane.setRowIndex(sensor, (int)row);
-                GridPane.setColumnIndex(sensor, (int)column);
-                GridPane.setRowSpan(sensor, (int)rowSpan);
-                GridPane.setColumnSpan(sensor, (int)columnSpan);
+                GridPane.setRowIndex(sensor, (int) row);
+                GridPane.setColumnIndex(sensor, (int) column);
+                GridPane.setRowSpan(sensor, (int) rowSpan);
+                GridPane.setColumnSpan(sensor, (int) columnSpan);
                 sensorPane.getChildren().add(sensor);
             }
         }
     }
 
     @Override
-    public boolean containsSensor(Sensor sensor)
-    {
+    public boolean containsSensor(Sensor sensor) {
         return pageData.containsSensor(sensor);
     }
 
     @Override
-    public boolean isSpaceFree(Sensor sensor)
-    {
+    public boolean isSpaceFree(Sensor sensor) {
         return pageData.isSpaceFree(sensor);
     }
 
-    private void removeTitle()
-    {
-        if (titleBox != null)
-        {
+    private void removeTitle() {
+        if (titleBox != null) {
             headerPane.getChildren().remove(titleBox);
         }
     }
 
-    private void removeSubtitle()
-    {
-        if (subtitleBox != null)
-        {
+    private void removeSubtitle() {
+        if (subtitleBox != null) {
             headerPane.getChildren().remove(subtitleBox);
         }
     }

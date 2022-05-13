@@ -29,35 +29,30 @@ import com.bennero.common.messages.RemoveSensorDataPositions;
  * RemoveSensorMessage stores the data of a sensor removal request. The message is sent by a connected client only. The
  * message must include the page that the sensor is to be removed from.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class RemoveSensorMessage
-{
+public class RemoveSensorMessage {
     private byte sensorId;
     private byte pageId;
 
-    private RemoveSensorMessage(byte sensorId, byte pageId)
-    {
+    private RemoveSensorMessage(byte sensorId, byte pageId) {
         this.sensorId = sensorId;
         this.pageId = pageId;
     }
 
-    public static RemoveSensorMessage processRemoveSensorMessage(byte[] bytes)
-    {
+    public static RemoveSensorMessage processRemoveSensorMessage(byte[] bytes) {
         final int sensorId = bytes[RemoveSensorDataPositions.SENSOR_ID_POS] & 0xFF;
         final int pageId = bytes[RemoveSensorDataPositions.PAGE_ID_POS] & 0xFF;
         return new RemoveSensorMessage((byte) sensorId, (byte) pageId);
     }
 
-    public byte getSensorId()
-    {
+    public byte getSensorId() {
         return sensorId;
     }
 
-    public byte getPageId()
-    {
+    public byte getPageId() {
         return pageId;
     }
 }

@@ -29,29 +29,42 @@ import com.bennero.server.network.Connection;
  * Provides thread safe access to a connection object. Useful when interacting with connection data across multiple
  * threads e.g. heartbeat and server threads
  *
- * @see         Connection
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see Connection
+ * @since 1.0
  */
-public class SynchronizedConnection
-{
+public class SynchronizedConnection {
     private Connection connection;
 
-    public void setConnection(Connection connection)
-    {
-        synchronized (this)
-        {
+    public void stop() {
+        synchronized (this) {
+            if (connection != null) {
+                connection.stop();
+                connection.setConnectionAlive(false);
+            }
+        }
+    }
+
+    public boolean isStopped() {
+        synchronized (this) {
+            if (connection == null) {
+                return true;
+            }
+
+            return connection.isStopped();
+        }
+    }
+
+    public void setConnection(Connection connection) {
+        synchronized (this) {
             this.connection = connection;
         }
     }
 
-    public String getClientHostname()
-    {
-        synchronized (this)
-        {
-            if (connection == null)
-            {
+    public String getClientHostname() {
+        synchronized (this) {
+            if (connection == null) {
                 return null;
             }
 
@@ -59,23 +72,17 @@ public class SynchronizedConnection
         }
     }
 
-    public void setConnectionAlive(boolean state)
-    {
-        synchronized (this)
-        {
-            if (connection != null)
-            {
+    public void setConnectionAlive(boolean state) {
+        synchronized (this) {
+            if (connection != null) {
                 connection.setConnectionAlive(state);
             }
         }
     }
 
-    public boolean isConnectionActive()
-    {
-        synchronized (this)
-        {
-            if (connection == null)
-            {
+    public boolean isConnectionActive() {
+        synchronized (this) {
+            if (connection == null) {
                 return false;
             }
 
@@ -83,12 +90,9 @@ public class SynchronizedConnection
         }
     }
 
-    public byte[] getAddress()
-    {
-        synchronized (this)
-        {
-            if (connection == null)
-            {
+    public byte[] getAddress() {
+        synchronized (this) {
+            if (connection == null) {
                 return null;
             }
 

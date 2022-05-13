@@ -29,27 +29,23 @@ import static com.bennero.common.Constants.MESSAGE_TYPE_POS;
  * RemovePageMessage stores the data of a page removal request. The message is sent by a connected client only. The
  * message only contains the page ID
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class RemovePageMessage
-{
+public class RemovePageMessage {
     private byte pageId;
 
-    private RemovePageMessage(byte pageId)
-    {
+    private RemovePageMessage(byte pageId) {
         this.pageId = pageId;
     }
 
-    public static RemovePageMessage processRemovePageMessage(byte[] bytes)
-    {
+    public static RemovePageMessage processRemovePageMessage(byte[] bytes) {
         final int pageId = bytes[MESSAGE_TYPE_POS + 1] & 0xFF;
         return new RemovePageMessage((byte) pageId);
     }
 
-    public byte getPageId()
-    {
+    public byte getPageId() {
         return pageId;
     }
 }

@@ -44,12 +44,11 @@ import static com.bennero.common.networking.NetworkUtils.writeToMessage;
  * HeartbeatSender sub-system manages sending heartbeat messages to the currently connected hardware monitor editor so
  * that it is aware the monitor is still alive
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-class HeartbeatSender implements Runnable
-{
+class HeartbeatSender implements Runnable {
     // Tag for logging
     private static final String CLASS_NAME = HeartbeatSender.class.getSimpleName();
 
@@ -60,32 +59,28 @@ class HeartbeatSender implements Runnable
     private Socket socket;
     private boolean connectionLostCounterEnabled;
     private int secondsConnectionLost;
+    private boolean sendHeartbeats;
 
-    public HeartbeatSender(SynchronizedConnection connection)
-    {
+    public HeartbeatSender(SynchronizedConnection connection) {
         this.connection = connection;
         socket = new Socket();
         secondsConnectionLost = 0;
         connectionLostCounterEnabled = false;
+        sendHeartbeats = true;
     }
 
-    private void connect()
-    {
-        if (connection.isConnectionActive())
-        {
+    private void connect() {
+        if (connection.isConnectionActive()) {
             Logger.log(LogLevel.INFO, CLASS_NAME, "Attempting Connection: " +
                     NetworkUtils.ip4AddressToString(connection.getAddress()));
 
             // This means that the IP4 and MAC address have just been discovered, so we can start with a direct
             // connection attempt
-            try
-            {
+            try {
                 socket.connect(new InetSocketAddress(InetAddress.getByAddress(connection.getAddress()), HEARTBEAT_PORT),
                         5000);
                 socketWriter = new PrintStream(socket.getOutputStream(), true);
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to connect to " +
                         NetworkUtils.ip4AddressToString(connection.getAddress()));
                 Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
@@ -94,25 +89,17 @@ class HeartbeatSender implements Runnable
     }
 
     @Override
-    public void run()
-    {
-        while (true)
-        {
+    public void run() {
+        while (sendHeartbeats) {
             // If the socket is not connected to anything, or the address of the socket does not match the current
             // connection.
-            if (!socket.isConnected())
-            {
+            if (!socket.isConnected()) {
                 connect();
-            }
-            else if (!NetworkUtils.doAddressesMatch(socket.getInetAddress().getAddress(), connection.getAddress()))
-            {
+            } else if (!NetworkUtils.doAddressesMatch(socket.getInetAddress().getAddress(), connection.getAddress())) {
                 // Disconnect current connection
-                try
-                {
+                try {
                     socket.close();
-                }
-                catch (IOException e)
-                {
+                } catch (IOException e) {
                     Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to close heartbeat socket");
                     Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
                 }
@@ -120,8 +107,7 @@ class HeartbeatSender implements Runnable
                 connect();
             }
 
-            if (connection.isConnectionActive())
-            {
+            if (connection.isConnectionActive()) {
                 // Write broadcast reply message
                 byte[] replyMessage = new byte[MESSAGE_NUM_BYTES];
                 replyMessage[MESSAGE_TYPE_POS] = MessageType.HEARTBEAT_MESSAGE;
@@ -136,34 +122,24 @@ class HeartbeatSender implements Runnable
 
                 // If we are on a Raspberry Pi OS and the screen has been turned off, turn it back on
                 if (OSUtils.getOperatingSystem() == OSUtils.OperatingSystem.RASPBERRY_PI &&
-                        !RaspberryPiScreenUtils.isDisplayEnabled())
-                {
+                        !RaspberryPiScreenUtils.isDisplayEnabled()) {
                     RaspberryPiScreenUtils.setDisplayEnabled(true);
                 }
-            }
-            else
-            {
-                if (connectionLostCounterEnabled)
-                {
-                    Logger.log(LogLevel.DEBUG, CLASS_NAME, "Seconds since connection lost: " + secondsConnectionLost);
-                    secondsConnectionLost++;
+            } else if(!connection.isStopped() && connectionLostCounterEnabled) {
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Seconds since connection lost: " + secondsConnectionLost);
+                secondsConnectionLost++;
 
-                    // If we are on a Raspberry Pi OS and the screen is on, turn it off
-                    if (secondsConnectionLost > SCREEN_TIME_OUT_SECONDS_RASPBERRY_PI_OS &&
-                            OSUtils.getOperatingSystem() == OSUtils.OperatingSystem.RASPBERRY_PI &&
-                            RaspberryPiScreenUtils.isDisplayEnabled())
-                    {
-                        RaspberryPiScreenUtils.setDisplayEnabled(false);
-                    }
+                // If we are on a Raspberry Pi OS and the screen is on, turn it off
+                if (secondsConnectionLost > SCREEN_TIME_OUT_SECONDS_RASPBERRY_PI_OS &&
+                        OSUtils.getOperatingSystem() == OSUtils.OperatingSystem.RASPBERRY_PI &&
+                        RaspberryPiScreenUtils.isDisplayEnabled()) {
+                    RaspberryPiScreenUtils.setDisplayEnabled(false);
                 }
             }
 
-            try
-            {
+            try {
                 Thread.sleep(1000);
-            }
-            catch (InterruptedException e)
-            {
+            } catch (InterruptedException e) {
                 Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to sleep thread");
                 Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
             }

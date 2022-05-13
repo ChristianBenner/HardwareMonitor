@@ -26,7 +26,7 @@
     <taskdef name="launch4j"
              classname="net.sf.launch4j.ant.Launch4jTask"
              classpath="${launch4j.dir}/launch4j.jar
-                 :${launch4j.dir}/lib/xstream.jar" />
+                 :${launch4j.dir}/lib/xstream.jar"/>
 
 
     <target name="buildReleases">
@@ -71,7 +71,7 @@
                              internalname="HardwareMonitorDisplay"
                              originalfilename="HardwareMonitorDisplay.exe"
                              language="ENGLISH_UK"/>
-                <jre path="${absolute.path}" />
+                <jre path="${absolute.path}"/>
             </config>
         </launch4j>
 

@@ -37,18 +37,15 @@ import javafx.event.Event;
  * @see Event
  * @since 1.0
  */
-public class PageSetupEvent extends Event
-{
+public class PageSetupEvent extends Event {
     private final PageSetupMessage pageSetupMessage;
 
-    public PageSetupEvent(final PageSetupMessage pageSetupMessage)
-    {
+    public PageSetupEvent(final PageSetupMessage pageSetupMessage) {
         super(pageSetupMessage, null, null);
         this.pageSetupMessage = pageSetupMessage;
     }
 
-    public PageData getPageData()
-    {
+    public PageData getPageData() {
         return pageSetupMessage.getPageData();
     }
 }

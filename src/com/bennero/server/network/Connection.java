@@ -52,12 +52,11 @@ import static com.bennero.server.message.ConnectionRequestMessage.processConnect
  * required to accept the control and may refuse it (and therefor end the connection) if the request states and
  * incompatible version or if the monitor is already in use.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class Connection implements Runnable
-{
+public class Connection implements Runnable {
     // Tag for logging
     private static final String CLASS_NAME = Connection.class.getSimpleName();
 
@@ -74,6 +73,7 @@ public class Connection implements Runnable
 
     private Boolean connected;
     private volatile String clientHostname;
+    private boolean stop;
 
     public Connection(SynchronizedConnection connection,
                       SocketChannel socketChannel,
@@ -84,8 +84,7 @@ public class Connection implements Runnable
                       EventHandler<RemovePageEvent> removePageMessageReceived,
                       EventHandler<SensorDataEvent> sensorDataMessageReceived,
                       EventHandler<RemoveSensorEvent> removeSensorMessageReceived,
-                      EventHandler<SensorTransformationEvent> sensorTransformationMessageReceived)
-    {
+                      EventHandler<SensorTransformationEvent> sensorTransformationMessageReceived) {
         this.connection = connection;
         this.socketChannel = socketChannel;
         this.connectedEvent = connectedEvent;
@@ -97,45 +96,46 @@ public class Connection implements Runnable
         this.removeSensorMessageReceived = removeSensorMessageReceived;
         this.sensorTransformationMessageReceived = sensorTransformationMessageReceived;
         connected = false;
+        stop = false;
 
         clientHostname = "Not specified";
     }
 
-    public void setConnectionAlive(boolean state)
-    {
+    public void setConnectionAlive(boolean state) {
         this.connected = state;
     }
 
-    public boolean isConnectionActive()
-    {
+    public boolean isConnectionActive() {
         return this.connected;
     }
 
-    public String getClientHostname()
-    {
+    public String getClientHostname() {
         return this.clientHostname;
     }
 
-    private void setClientHostname(String clientHostname)
-    {
+    private void setClientHostname(String clientHostname) {
         this.clientHostname = clientHostname;
     }
 
-    public byte[] getAddress()
-    {
+    public byte[] getAddress() {
         return this.socketChannel.socket().getInetAddress().getAddress();
     }
 
+    public boolean isStopped() {
+        return stop;
+    }
+
+    public void stop() {
+        stop = true;
+    }
+
     @Override
-    public void run()
-    {
-        try
-        {
+    public void run() {
+        try {
             InputStream is = socketChannel.socket().getInputStream();
 
             byte[] bytes;
-            while (socketChannel.isOpen())
-            {
+            while (!stop && socketChannel.isOpen()) {
                 bytes = new byte[MESSAGE_NUM_BYTES];
                 is.read(bytes, 0, MESSAGE_NUM_BYTES);
                 readMessage(bytes);
@@ -144,24 +144,18 @@ public class Connection implements Runnable
             Logger.log(LogLevel.INFO, CLASS_NAME, "Connection has ended with '" + connection.getClientHostname() +
                     "'/" + NetworkUtils.ip4AddressToString(connection.getAddress()));
             socketChannel.close();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             Logger.log(LogLevel.ERROR, CLASS_NAME, "Unexpected end of connection with '" +
                     connection.getClientHostname() + "'/" + NetworkUtils.ip4AddressToString(connection.getAddress()));
             Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
-        }
-        finally
-        {
+        } finally {
             connection.setConnectionAlive(false);
             disconnectedEvent.handle(new Event(null));
         }
     }
 
-    private void readMessage(byte[] bytes)
-    {
-        switch (bytes[MESSAGE_TYPE_POS])
-        {
+    private void readMessage(byte[] bytes) {
+        switch (bytes[MESSAGE_TYPE_POS]) {
             case MessageType.DATA:
                 sensorDataMessageReceived.handle(new SensorDataEvent(SensorDataMessage.processSensorDataMessage(bytes)));
                 break;
@@ -196,8 +190,7 @@ public class Connection implements Runnable
         }
     }
 
-    private void handleConnectionRequest(ConnectionRequestMessage message)
-    {
+    private void handleConnectionRequest(ConnectionRequestMessage message) {
         // We now know the client hostname so store this information
         setClientHostname(message.getHostname());
 
@@ -214,28 +207,22 @@ public class Connection implements Runnable
         // Should we accept the connection or not
         final boolean acceptConnection = !versionMismatch && !currentlyInUse;
 
-        if (acceptConnection)
-        {
+        if (acceptConnection) {
             sendConnectionRequestReplyMessage(true, false, false);
 
             Logger.log(LogLevel.INFO, CLASS_NAME, "Accepted connection request message from '" + message.
                     getHostname() + "' v(" + message.getMajorVersion() + "." + message.getMinorVersion() + "." +
                     message.getPatchVersion() + ")");
             connection.setConnection(this);
-        }
-        else
-        {
-            if (versionMismatch)
-            {
+        } else {
+            if (versionMismatch) {
                 sendConnectionRequestReplyMessage(false, true, currentlyInUse);
 
                 Logger.log(LogLevel.WARNING, CLASS_NAME, "Rejected connection request message from '" +
                         message.getHostname() + "' v(" + message.getMajorVersion() + "." + message.
                         getMinorVersion() + "." + message.getPatchVersion() + ") because the client version " +
                         "is not compatible with the monitor version (" + Version.getVersionString() + ")");
-            }
-            else if (currentlyInUse)
-            {
+            } else if (currentlyInUse) {
                 sendConnectionRequestReplyMessage(false, false, true,
                         connection.getClientHostname());
 
@@ -247,26 +234,19 @@ public class Connection implements Runnable
 
             // Try to close the socket channel, ending the connection with the client and making the threads
             // life come to an end
-            try
-            {
+            try {
                 socketChannel.close();
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to close connections socket channel");
                 Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
             }
         }
     }
 
-    private void handleDisconnect()
-    {
-        try
-        {
+    private void handleDisconnect() {
+        try {
             socketChannel.close();
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to send connections socket channel");
             Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
         }
@@ -276,8 +256,7 @@ public class Connection implements Runnable
     private void sendConnectionRequestReplyMessage(boolean acceptConnection,
                                                    boolean versionMismatch,
                                                    boolean currentlyInUse,
-                                                   final String hostname)
-    {
+                                                   final String hostname) {
         byte[] message = new byte[MESSAGE_NUM_BYTES];
         message[MESSAGE_TYPE_POS] = MessageType.CONNECTION_REQUEST_RESPONSE_MESSAGE;
         message[ConnectionRequestReplyDataPositions.MAJOR_VERSION_POS] = VERSION_MAJOR;
@@ -287,26 +266,21 @@ public class Connection implements Runnable
         message[ConnectionRequestReplyDataPositions.VERSION_MISMATCH] = versionMismatch ? (byte) 0x01 : 0x00;
         message[ConnectionRequestReplyDataPositions.CURRENTLY_IN_USE] = currentlyInUse ? (byte) 0x01 : 0x00;
 
-        if (hostname != null)
-        {
+        if (hostname != null) {
             writeStringToMessage(message, ConnectionRequestReplyDataPositions.CURRENT_CLIENT_HOSTNAME, hostname,
                     NAME_STRING_NUM_BYTES);
         }
 
-        try
-        {
+        try {
             socketChannel.socket().getOutputStream().write(message, 0, MESSAGE_NUM_BYTES);
             Logger.log(LogLevel.DEBUG, CLASS_NAME, "Sent connection request reply message");
             socketChannel.socket().getOutputStream().flush();
 
-            if (acceptConnection)
-            {
+            if (acceptConnection) {
                 connectedEvent.handle(null);
                 setConnectionAlive(true);
             }
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to sent connection request reply message");
             Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
         }
@@ -314,8 +288,7 @@ public class Connection implements Runnable
 
     private void sendConnectionRequestReplyMessage(boolean acceptConnection,
                                                    boolean versionMismatch,
-                                                   boolean currentlyInUse)
-    {
+                                                   boolean currentlyInUse) {
         sendConnectionRequestReplyMessage(acceptConnection, versionMismatch, currentlyInUse, null);
     }
 }

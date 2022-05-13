@@ -17,21 +17,17 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-public class NetworkConnectionEntryPage extends BorderPane
-{
+public class NetworkConnectionEntryPage extends BorderPane {
     // Class name used in logging
     private static final String CLASS_NAME = NetworkConnectionEntryPage.class.getSimpleName();
-
-    private final String networkDevice;
-    private final String networkSsid;
-    private final String previousConnectionError;
-    private final boolean showPreviousConnectionError;
-
     final EventHandler backButtonEvent;
     final EventHandler<ConnectionEvent> connectingEvent;
     final EventHandler connectedEvent;
     final EventHandler<NetworkConnectionEntryEvent> failedConnectionEvent;
-
+    private final String networkDevice;
+    private final String networkSsid;
+    private final String previousConnectionError;
+    private final boolean showPreviousConnectionError;
     private boolean showPassword;
 
     public NetworkConnectionEntryPage(final String networkDevice,
@@ -39,8 +35,7 @@ public class NetworkConnectionEntryPage extends BorderPane
                                       final EventHandler backButtonEvent,
                                       final EventHandler<ConnectionEvent> connectingEvent,
                                       final EventHandler connectedEvent,
-                                      final EventHandler<NetworkConnectionEntryEvent> failedConnectionEvent)
-    {
+                                      final EventHandler<NetworkConnectionEntryEvent> failedConnectionEvent) {
         this.networkDevice = networkDevice;
         this.networkSsid = networkSsid;
         this.showPassword = false;
@@ -59,8 +54,7 @@ public class NetworkConnectionEntryPage extends BorderPane
                                       final EventHandler backButtonEvent,
                                       final EventHandler<ConnectionEvent> connectingEvent,
                                       final EventHandler connectedEvent,
-                                      final EventHandler<NetworkConnectionEntryEvent> failedConnectionEvent)
-    {
+                                      final EventHandler<NetworkConnectionEntryEvent> failedConnectionEvent) {
         this.networkDevice = networkDevice;
         this.networkSsid = networkSsid;
         this.previousConnectionError = connectionErrorMessage;
@@ -73,8 +67,7 @@ public class NetworkConnectionEntryPage extends BorderPane
         init();
     }
 
-    private void init()
-    {
+    private void init() {
         BorderPane enterPasswordPane = new BorderPane();
         BorderPane passwordFooterPane = new BorderPane();
 
@@ -120,14 +113,12 @@ public class NetworkConnectionEntryPage extends BorderPane
 
             connectingEvent.handle(new ConnectionEvent(networkSsid));
 
-            try
-            {
+            try {
                 final ConnectionAttemptStatus connectionAttemptStatus = NetworkUtils.connectToWifi(networkDevice,
                         networkSsid,
                         PASSWORD);
 
-                switch (connectionAttemptStatus)
-                {
+                switch (connectionAttemptStatus) {
                     case SUCCESS:
                         connectedEvent.handle(null);
                         break;
@@ -165,9 +156,7 @@ public class NetworkConnectionEntryPage extends BorderPane
                                 "Unknown failure"));
                         break;
                 }
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to connect to network " + networkSsid);
                 Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
                 failedConnectionEvent.handle(new NetworkConnectionEntryEvent(networkSsid,
@@ -181,14 +170,11 @@ public class NetworkConnectionEntryPage extends BorderPane
         {
             showPassword = !showPassword;
 
-            if (showPassword)
-            {
+            if (showPassword) {
                 passwordTextField.setText(passwordField.getText());
                 passwordPane.getChildren().remove(passwordField);
                 passwordPane.getChildren().add(passwordTextField);
-            }
-            else
-            {
+            } else {
                 passwordField.setText(passwordTextField.getText());
                 passwordPane.getChildren().remove(passwordTextField);
                 passwordPane.getChildren().add(passwordField);
@@ -207,8 +193,7 @@ public class NetworkConnectionEntryPage extends BorderPane
         slide.getChildren().addAll(passwordEntryBox);
 
         // Shows the previous connection error if it was specified
-        if(showPreviousConnectionError)
-        {
+        if (showPreviousConnectionError) {
             Label connectionFailedLabel = new Label("Connection Failed: " + previousConnectionError);
             connectionFailedLabel.setId("hw-network-connection-failed-label");
             slide.getChildren().add(connectionFailedLabel);

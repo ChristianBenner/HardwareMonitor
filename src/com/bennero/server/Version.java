@@ -31,18 +31,16 @@ package com.bennero.server;
  * Patch: Small changes such as bug fixes or minor feature implementations. Any network message changes should be minor
  * not patch as it signifies incompatibility with hardware monitor editors that do not have the network message change.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class Version
-{
+public class Version {
     public static final byte VERSION_MAJOR = 1;
-    public static final byte VERSION_MINOR = 3;
+    public static final byte VERSION_MINOR = 0;
     public static final byte VERSION_PATCH = 0;
 
-    public static String getVersionString()
-    {
+    public static String getVersionString() {
         return "v" + VERSION_MAJOR + "." + VERSION_MINOR + "." + VERSION_PATCH;
     }
 }

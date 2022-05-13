@@ -39,32 +39,28 @@ import static com.bennero.common.networking.NetworkUtils.readLong;
  * contains the IP4 address of the broadcasting device so that the server can send a response back to it (approving or
  * denying). A BroadcastMessage is to be sent on a broadcast address so that all Hardware Monitor servers can see it.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class BroadcastMessage
-{
+public class BroadcastMessage {
     // Class name used in logging
-    private static final String CLASS_NAME = BroadcastMessage.class.getName();
+    private static final String CLASS_NAME = BroadcastMessage.class.getSimpleName();
 
     private final boolean verifiedBroadcastMessage;
     private final byte[] ip4Address;
 
-    private BroadcastMessage(boolean verifiedBroadcastMessage, byte[] ip4Address)
-    {
+    private BroadcastMessage(boolean verifiedBroadcastMessage, byte[] ip4Address) {
         this.verifiedBroadcastMessage = verifiedBroadcastMessage;
         this.ip4Address = ip4Address;
     }
 
-    public static BroadcastMessage processBroadcastMessageData(byte[] bytes)
-    {
+    public static BroadcastMessage processBroadcastMessageData(byte[] bytes) {
         final long hwEditorSystemUniqueConnectionId =
                 readLong(bytes, BroadcastAnnouncementDataPositions.HW_SYSTEM_IDENTIFIER_POS);
 
         // Ensures that the message came from a hardware monitor editor and not a random device on the network
-        if (hwEditorSystemUniqueConnectionId == HW_EDITOR_SYSTEM_UNIQUE_CONNECTION_ID)
-        {
+        if (hwEditorSystemUniqueConnectionId == HW_EDITOR_SYSTEM_UNIQUE_CONNECTION_ID) {
             byte[] ip4Address = readBytes(bytes, BroadcastAnnouncementDataPositions.IP4_ADDRESS_POS,
                     IP4_ADDRESS_NUM_BYTES);
             Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received a broadcast announcement message from: " +
@@ -75,13 +71,11 @@ public class BroadcastMessage
         return new BroadcastMessage(false, null);
     }
 
-    public boolean isVerifiedBroadcastMessage()
-    {
+    public boolean isVerifiedBroadcastMessage() {
         return verifiedBroadcastMessage;
     }
 
-    public byte[] getIp4Address()
-    {
+    public byte[] getIp4Address() {
         return ip4Address;
     }
 }

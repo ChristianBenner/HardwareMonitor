@@ -31,29 +31,25 @@ import javafx.event.Event;
  * SensorSetupEvent creates an event that is used to provide a SensorSetupMessage object back to a listener through an
  * EventHandler
  *
- * @see         SensorSetupMessage
- * @see         Event
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see SensorSetupMessage
+ * @see Event
+ * @since 1.0
  */
-public class SensorSetupEvent extends Event
-{
+public class SensorSetupEvent extends Event {
     private final SensorSetupMessage sensorSetupMessage;
 
-    public SensorSetupEvent(final SensorSetupMessage sensorSetupMessage)
-    {
+    public SensorSetupEvent(final SensorSetupMessage sensorSetupMessage) {
         super(sensorSetupMessage, null, null);
         this.sensorSetupMessage = sensorSetupMessage;
     }
 
-    public Sensor getSensor()
-    {
+    public Sensor getSensor() {
         return sensorSetupMessage.getSensor();
     }
 
-    public byte getPageId()
-    {
+    public byte getPageId() {
         return sensorSetupMessage.getPageId();
     }
 }
