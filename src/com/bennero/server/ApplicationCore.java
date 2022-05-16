@@ -56,6 +56,7 @@ import javafx.stage.Stage;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -69,7 +70,7 @@ public class ApplicationCore extends Application {
     public static final int WINDOW_WIDTH_PX = 800;
     public static final int WINDOW_HEIGHT_PX = 480;
     private static final String CLASS_NAME = ApplicationCore.class.getSimpleName();
-    private List<Sensor> sensorList = new ArrayList<>();
+    private HashMap<Byte, Sensor> sensorMap = new HashMap<>();
     private StackPane mainPane;
 
     private Thread serverThread;
@@ -137,8 +138,7 @@ public class ApplicationCore extends Application {
                 false, "Back", event ->
         {
             if (!NetworkUtils.isConnected()) {
-                Logger.log(LogLevel.WARNING, CLASS_NAME,
-                        "Not connected to a network, opening connection page");
+                Logger.log(LogLevel.WARNING, CLASS_NAME, "Not connected to a network, opening connection page");
                 displayNetworkSelectionPage();
             } else {
                 // Go back to the waiting for connection page
@@ -250,6 +250,8 @@ public class ApplicationCore extends Application {
     }
 
     public void displayPage(CustomisableSensorPage customisableSensorPage, CustomisableSensorPage currentCustomisableSensorPage) {
+        Logger.log(LogLevel.DEBUG, CLASS_NAME, "Display Page: " + customisableSensorPage.getTitle());
+
         // If we are trying to add a page before its evening finished transitioning away from itself, remove it and
         // re-add it. It may cause no page to show but this is a fault in the way the user has configured it
         if (mainPane.getChildren().contains(customisableSensorPage)) {
@@ -305,7 +307,7 @@ public class ApplicationCore extends Application {
     private void onDisconnect() {
         Platform.runLater(() -> {
             pageRoller.removeAllPages();
-            sensorList.clear();
+            sensorMap.clear();
 
             try {
                 server.disconnectActiveConnection();
@@ -318,56 +320,57 @@ public class ApplicationCore extends Application {
     }
 
     private void processPageMessageEvent(PageSetupEvent pageMessageEvent) {
-        Platform.runLater(() ->
-        {
-            boolean exists = pageRoller.updatePage(pageMessageEvent.getPageData());
+        PageData pdRcv = pageMessageEvent.getPageData();
+        Logger.logf(LogLevel.DEBUG, CLASS_NAME, "Received new page: [ID: %d], [TITLE: %s]", pdRcv.getUniqueId(), pdRcv.getTitle());
 
-            if (!exists) {
-                Logger.log(LogLevel.INFO, CLASS_NAME, "Received new page");
-                PageData pdRcv = pageMessageEvent.getPageData();
+        Platform.runLater(() -> {
+            if (!pageRoller.exists(pdRcv.getUniqueId())) {
                 CustomisableSensorPage pgRcv = new CustomisableSensorPage(pdRcv);
                 pageRoller.addPage(pgRcv);
+            } else {
+                pageRoller.updatePage(pdRcv);
             }
         });
     }
 
     private void processSensorMessageEvent(SensorSetupEvent sensorMessageEvent) {
+        Sensor sensor = sensorMessageEvent.getSensor();
+        Logger.logf(LogLevel.DEBUG, CLASS_NAME, "Received new sensor: [ID: %d], [TITLE: %s]", sensor.getUniqueId(), sensor.getTitle());
+
         Platform.runLater(() ->
         {
-            sensorList.add(sensorMessageEvent.getSensor());
-            pageRoller.addSensor(sensorMessageEvent.getPageId(), sensorMessageEvent.getSensor());
+            sensorMap.put(sensor.getUniqueId(), sensor);
+            pageRoller.addSensor(sensorMessageEvent.getPageId(), sensor);
         });
     }
 
     private void processRemovePageEvent(RemovePageEvent removePageEvent) {
+        Logger.logf(LogLevel.DEBUG, CLASS_NAME, "Received request to remove page: [ID: %d]", removePageEvent.getPageId());
         Platform.runLater(() ->
         {
             pageRoller.removePage(removePageEvent.getPageId());
         });
     }
 
-    private void processSensorTransformationEvent(SensorTransformationEvent sensorTransformationEvent) {
-        Platform.runLater(() -> pageRoller.transformSensor(sensorTransformationEvent.getSensorId(),
-                sensorTransformationEvent.getPageId(), sensorTransformationEvent.getRow(),
-                sensorTransformationEvent.getColumn(), sensorTransformationEvent.getRowSpan(),
-                sensorTransformationEvent.getColumnSpan()));
+    private void processSensorTransformationEvent(SensorTransformationEvent event) {
+        Logger.logf(LogLevel.DEBUG, CLASS_NAME, "Received sensor transformation request: [ID: %d], [PAGE: %d]", event.getSensorId(), event.getPageId());
+        Platform.runLater(() -> pageRoller.transformSensor(event.getSensorId(), event.getPageId(), event.getRow(),
+                event.getColumn(), event.getRowSpan(), event.getColumnSpan()));
     }
 
     private void processSensorDataEvent(SensorDataEvent sensorDataEvent) {
         Platform.runLater(() ->
         {
-            // See if the sensor exists in the list of sensors
-            for (int i = 0; i < sensorList.size(); i++) {
-                if ((byte) sensorList.get(i).getUniqueId() == sensorDataEvent.getSensorId()) {
-                    // Update the sensor value
-                    sensorList.get(i).setValue(sensorDataEvent.getValue());
-                    break;
-                }
+            byte key = sensorDataEvent.getSensorId();
+            if(sensorMap.containsKey(key)) {
+                sensorMap.get(key).setValue(sensorDataEvent.getValue());
             }
         });
     }
 
     private void processRemoveSensorEvent(RemoveSensorEvent removeSensorEvent) {
+        Logger.logf(LogLevel.DEBUG, CLASS_NAME, "Received remove sensor request: [ID: %d], [PAGE: %d]", removeSensorEvent.getSensorId(), removeSensorEvent.getPageId());
+
         Platform.runLater(() -> pageRoller.removeSensor(removeSensorEvent.getSensorId(),
                 removeSensorEvent.getPageId()));
     }

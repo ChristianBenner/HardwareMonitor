@@ -67,7 +67,7 @@ public class SensorSetupMessage {
         final float initialValue = readFloat(bytes, SensorDataPositions.INITIAL_VALUE_POS);
         final String title = readString(bytes, SensorDataPositions.TITLE_POS, NAME_STRING_NUM_BYTES);
 
-        Sensor sensor = new Sensor(sensorId, row, column, (byte) type, skin, max, threshold, title, title,
+        Sensor sensor = new Sensor((byte)sensorId, row, column, (byte) type, skin, max, threshold, title, title,
                 averageEnabled, averagingPeriod, rowSpan, columnSpan);
         sensor.setValue(initialValue);
 

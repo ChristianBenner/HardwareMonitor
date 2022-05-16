@@ -48,7 +48,7 @@ public class SensorDataMessage {
     public static SensorDataMessage processSensorDataMessage(byte[] bytes) {
         final int sensorId = bytes[SensorValueDataPositions.ID_POS] & 0xFF;
         final float value = readFloat(bytes, SensorValueDataPositions.VALUE_POS);
-        return new SensorDataMessage((byte) sensorId, value);
+        return new SensorDataMessage((byte)sensorId, value);
     }
 
     public byte getSensorId() {

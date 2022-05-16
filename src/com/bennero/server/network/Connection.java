@@ -160,27 +160,21 @@ public class Connection implements Runnable {
                 sensorDataMessageReceived.handle(new SensorDataEvent(SensorDataMessage.processSensorDataMessage(bytes)));
                 break;
             case MessageType.PAGE_SETUP:
-                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received page setup message");
                 pageMessageReceived.handle(new PageSetupEvent(PageSetupMessage.readPageSetupMessage(bytes)));
                 break;
             case MessageType.SENSOR_SETUP:
-                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received sensor setup message");
                 sensorMessageReceived.handle(new SensorSetupEvent(SensorSetupMessage.processSensorSetupMessage(bytes)));
                 break;
             case MessageType.REMOVE_PAGE:
-                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received remove page message");
                 removePageMessageReceived.handle(new RemovePageEvent(RemovePageMessage.processRemovePageMessage(bytes)));
                 break;
             case MessageType.REMOVE_SENSOR:
-                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received remove sensor message");
                 removeSensorMessageReceived.handle(new RemoveSensorEvent(RemoveSensorMessage.processRemoveSensorMessage(bytes)));
                 break;
             case MessageType.SENSOR_TRANSFORMATION_MESSAGE:
-                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received sensor transformation message");
                 sensorTransformationMessageReceived.handle(new SensorTransformationEvent(SensorTransformationMessage.processSensorTransformationMessage(bytes)));
                 break;
             case MessageType.CONNECTION_REQUEST_MESSAGE:
-                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received connection request message");
                 handleConnectionRequest(processConnectionRequestMessageData(bytes));
                 break;
             case MessageType.DISCONNECT_MESSAGE:

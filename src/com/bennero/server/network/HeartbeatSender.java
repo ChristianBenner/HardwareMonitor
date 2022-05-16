@@ -114,7 +114,6 @@ class HeartbeatSender implements Runnable {
                 writeToMessage(replyMessage, HW_HEARTBEAT_VALIDATION_NUMBER_POS, HW_HEARTBEAT_VALIDATION_NUMBER);
 
                 socketWriter.write(replyMessage, 0, MESSAGE_NUM_BYTES);
-                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Sent heartbeat message");
                 socketWriter.flush();
 
                 secondsConnectionLost = 0;

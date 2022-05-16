@@ -75,8 +75,8 @@ public class PageSetupMessage {
         Color titleColor = Color.rgb(titleColourR, titleColourG, titleColourB);
         Color subtitleColor = Color.rgb(subtitleColourR, subtitleColourG, subtitleColourB);
 
-        PageData pageData = new PageData(pageId, backgroundColour, titleColor, subtitleColor, pageRows, pageColumns,
-                nextPageId, pageTransitionType, pageTransitionTime, pageDurationMs, title,
+        PageData pageData = new PageData((byte)pageId, backgroundColour, titleColor, subtitleColor, pageRows,
+                pageColumns, (byte)nextPageId, pageTransitionType, pageTransitionTime, pageDurationMs, title,
                 titleEnabled == 0x01, titleAlignment, subtitle, subtitleEnabled == 0x01,
                 subtitleAlignment);
 

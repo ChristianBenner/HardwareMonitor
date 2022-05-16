@@ -239,12 +239,12 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate {
     }
 
     @Override
-    public int getUniqueId() {
+    public byte getUniqueId() {
         return pageData.getUniqueId();
     }
 
     @Override
-    public void setUniqueId(int id) {
+    public void setUniqueId(byte id) {
         pageData.setUniqueId(id);
     }
 
@@ -326,12 +326,12 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate {
     }
 
     @Override
-    public int getNextPageId() {
+    public byte getNextPageId() {
         return pageData.getNextPageId();
     }
 
     @Override
-    public void setNextPageId(int nextPageId) {
+    public void setNextPageId(byte nextPageId) {
         pageData.setNextPageId(nextPageId);
     }
 
@@ -508,7 +508,7 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate {
         initGrid();
     }
 
-    public void removeSensor(byte uniqueId) {
+    public void removeSensor(int uniqueId) {
         // Find sensor in the list
         boolean found = false;
         for (int i = 0; i < placedSensors.size() && !found; i++) {
@@ -519,11 +519,7 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate {
         }
     }
 
-    public void transformSensor(byte sensorId,
-                                byte row,
-                                byte column,
-                                byte rowSpan,
-                                byte columnSpan) {
+    public void transformSensor(int sensorId, byte row, byte column, byte rowSpan, byte columnSpan) {
         // Find sensor in the list
         boolean found = false;
         for (int i = 0; i < placedSensors.size() && !found; i++) {
