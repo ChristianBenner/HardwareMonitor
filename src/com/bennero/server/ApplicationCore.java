@@ -28,6 +28,7 @@ import com.bennero.common.Sensor;
 import com.bennero.common.TransitionType;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.FileDataPositions;
 import com.bennero.common.networking.AddressInformation;
 import com.bennero.common.networking.DiscoveredNetworkList;
 import com.bennero.common.networking.NetworkUtils;
@@ -35,6 +36,7 @@ import com.bennero.common.osspecific.OSUtils;
 import com.bennero.server.event.*;
 import com.bennero.server.network.Server;
 import com.bennero.server.pages.*;
+import com.bennero.server.serial.SerialListener;
 import com.bennero.server.ui.DisconnectButton;
 import javafx.animation.Animation;
 import javafx.animation.Transition;
@@ -53,6 +55,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -67,6 +71,13 @@ import java.util.List;
  * @since 1.0
  */
 public class ApplicationCore extends Application {
+    enum CommunicationMode {
+        USB,
+        IP,
+    }
+
+    private static final CommunicationMode COMMUNICATION_MODE = CommunicationMode.USB;
+
     public static final int WINDOW_WIDTH_PX = 800;
     public static final int WINDOW_HEIGHT_PX = 480;
     private static final String CLASS_NAME = ApplicationCore.class.getSimpleName();
@@ -375,6 +386,38 @@ public class ApplicationCore extends Application {
                 removeSensorEvent.getPageId()));
     }
 
+    private void processFileTransferEvent(FileTransferEvent fileTransferEvent) {
+        Logger.logf(LogLevel.DEBUG, CLASS_NAME, "Received file: [Name: %s], [NumBytes: %d]", fileTransferEvent.getFileName(), fileTransferEvent.getFileBytes().length);
+
+        // Save file to device
+        String dir;
+        switch (fileTransferEvent.getType()) {
+            case FileDataPositions.TYPE_IMAGE:
+                dir = OSUtils.getBackgroundImageDirectory() + "_in";
+                break;
+            case FileDataPositions.TYPE_SOFTWARE_UPDATE:
+            default:
+                dir = OSUtils.getApplicationDataDirectory() + "_in";
+                break;
+        }
+
+        File directory = new File(dir);
+        if(!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        String filePath = dir + File.separator + fileTransferEvent.getFileName();
+
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+            fileOutputStream.write(fileTransferEvent.getFileBytes());
+            fileOutputStream.flush();
+            fileOutputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void runServer() {
         try {
             // Start server and stuff now
@@ -400,6 +443,12 @@ public class ApplicationCore extends Application {
             Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to run server");
             Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
         }
+    }
+
+    public void displaySerialAwaitingConnectionPage(String string) {
+        mainPane.getChildren().clear();
+        InformationPage informationPage = new InformationPage("Awaiting USB Connection", string);
+        mainPane.getChildren().add(informationPage);
     }
 
     @Override
@@ -468,15 +517,45 @@ public class ApplicationCore extends Application {
         Logger.log(LogLevel.INFO, CLASS_NAME, "Version: " + Version.getVersionString());
         Logger.log(LogLevel.INFO, CLASS_NAME, "OperatingSystem: " + OSUtils.getOperatingSystemString());
 
+        Logger.log(LogLevel.INFO, CLASS_NAME, "TEST1");
         stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
-
-        if (!NetworkUtils.isConnected()) {
-            Logger.log(LogLevel.WARNING, CLASS_NAME, "Not connected to a network, opening connection page");
-            displayNetworkSelectionPage();
-        } else {
-            runServer();
+        Logger.log(LogLevel.INFO, CLASS_NAME, "TEST2");
+        switch (COMMUNICATION_MODE) {
+            case USB:
+                Logger.log(LogLevel.INFO, CLASS_NAME, "TEST3");
+                SerialListener serialListener = new SerialListener(disconnectEvent -> onDisconnect(),
+                        pageMessageEvent -> processPageMessageEvent(pageMessageEvent),
+                        sensorMessageEvent -> processSensorMessageEvent(sensorMessageEvent),
+                        removePageEvent -> processRemovePageEvent(removePageEvent),
+                        sensorDataEvent -> processSensorDataEvent(sensorDataEvent),
+                        removeSensorEvent -> processRemoveSensorEvent(removeSensorEvent),
+                        sensorTransformationEvent -> processSensorTransformationEvent(sensorTransformationEvent),
+                        fileTransferEvent -> processFileTransferEvent(fileTransferEvent));
+                displaySerialAwaitingConnectionPage(null);
+                Logger.log(LogLevel.INFO, CLASS_NAME, "TEST4");
+                pageRoller = new PageRoller(this);
+                pageRollerThread = new Thread(pageRoller);
+                pageRollerThread.start();
+                Logger.log(LogLevel.INFO, CLASS_NAME, "TEST5");
+                serialListener.connect(event -> {
+                    if(!event.isConnected()) {
+                        displaySerialAwaitingConnectionPage(event.getError());
+                    } else {
+                        displayConnectedPage();
+                    }
+                });
+                Logger.log(LogLevel.INFO, CLASS_NAME, "TEST6");
+                break;
+            case IP:
+                if (!NetworkUtils.isConnected()) {
+                    Logger.log(LogLevel.WARNING, CLASS_NAME, "Not connected to a network, opening connection page");
+                    displayNetworkSelectionPage();
+                } else {
+                    runServer();
+                }
+                break;
         }
-
+        Logger.log(LogLevel.INFO, CLASS_NAME, "TEST7");
         stage.show();
     }
 

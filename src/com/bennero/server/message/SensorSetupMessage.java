@@ -30,6 +30,7 @@ import com.bennero.common.messages.SensorDataPositions;
 import javafx.scene.paint.Color;
 
 import static com.bennero.common.Constants.NAME_STRING_NUM_BYTES;
+import static com.bennero.common.messages.MessageUtils.*;
 import static com.bennero.common.networking.NetworkUtils.*;
 
 /**
@@ -66,6 +67,7 @@ public class SensorSetupMessage {
         final int columnSpan = bytes[SensorDataPositions.COLUMN_SPAN_POS] & 0xFF;
         final float initialValue = readFloat(bytes, SensorDataPositions.INITIAL_VALUE_POS);
         final String title = readString(bytes, SensorDataPositions.TITLE_POS, NAME_STRING_NUM_BYTES);
+
 
         Sensor sensor = new Sensor((byte)sensorId, row, column, (byte) type, skin, max, threshold, title, title,
                 averageEnabled, averagingPeriod, rowSpan, columnSpan);

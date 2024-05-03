@@ -30,8 +30,8 @@ import com.bennero.common.networking.NetworkUtils;
 
 import static com.bennero.common.Constants.HW_EDITOR_SYSTEM_UNIQUE_CONNECTION_ID;
 import static com.bennero.common.Constants.IP4_ADDRESS_NUM_BYTES;
-import static com.bennero.common.networking.NetworkUtils.readBytes;
-import static com.bennero.common.networking.NetworkUtils.readLong;
+import static com.bennero.common.messages.MessageUtils.readBytes;
+import static com.bennero.common.messages.MessageUtils.readLong;
 
 /**
  * BroadcastMessage stores data from a received broadcast message such as the IP4 address that it came from. A
@@ -56,13 +56,11 @@ public class BroadcastMessage {
     }
 
     public static BroadcastMessage processBroadcastMessageData(byte[] bytes) {
-        final long hwEditorSystemUniqueConnectionId =
-                readLong(bytes, BroadcastAnnouncementDataPositions.HW_SYSTEM_IDENTIFIER_POS);
+        final long hwEditorSystemUniqueConnectionId = readLong(bytes, BroadcastAnnouncementDataPositions.HW_SYSTEM_IDENTIFIER_POS);
 
         // Ensures that the message came from a hardware monitor editor and not a random device on the network
         if (hwEditorSystemUniqueConnectionId == HW_EDITOR_SYSTEM_UNIQUE_CONNECTION_ID) {
-            byte[] ip4Address = readBytes(bytes, BroadcastAnnouncementDataPositions.IP4_ADDRESS_POS,
-                    IP4_ADDRESS_NUM_BYTES);
+            byte[] ip4Address = readBytes(bytes, BroadcastAnnouncementDataPositions.IP4_ADDRESS_POS, IP4_ADDRESS_NUM_BYTES);
             Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received a broadcast announcement message from: " +
                     NetworkUtils.ip4AddressToString(ip4Address));
             return new BroadcastMessage(true, ip4Address);

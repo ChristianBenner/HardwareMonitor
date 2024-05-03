@@ -27,8 +27,8 @@ import com.bennero.common.messages.ConnectionRequestDataPositions;
 
 import static com.bennero.common.Constants.IP4_ADDRESS_NUM_BYTES;
 import static com.bennero.common.Constants.NAME_STRING_NUM_BYTES;
-import static com.bennero.common.networking.NetworkUtils.readBytes;
-import static com.bennero.common.networking.NetworkUtils.readString;
+import static com.bennero.common.messages.MessageUtils.readBytes;
+import static com.bennero.common.messages.MessageUtils.readString;
 
 /**
  * ConnectionRequestMessage stores the data associated to a connection request sent by a client. This includes the

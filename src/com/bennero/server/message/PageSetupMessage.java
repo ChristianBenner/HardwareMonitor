@@ -27,9 +27,10 @@ import com.bennero.common.PageData;
 import com.bennero.common.messages.PageDataPositions;
 import javafx.scene.paint.Color;
 
+import static com.bennero.common.Constants.BACKGROUND_IMAGE_STRING_NUM_BYTES;
 import static com.bennero.common.Constants.NAME_STRING_NUM_BYTES;
-import static com.bennero.common.networking.NetworkUtils.readInt;
-import static com.bennero.common.networking.NetworkUtils.readString;
+import static com.bennero.common.messages.MessageUtils.readInt;
+import static com.bennero.common.messages.MessageUtils.readString;
 
 /**
  * PageSetupMessage stores the data of a page creation request. The PageSetupMessage is sent by a connected client
@@ -70,6 +71,7 @@ public class PageSetupMessage {
         final String subtitle = readString(bytes, PageDataPositions.SUBTITLE_POS, NAME_STRING_NUM_BYTES);
         final int subtitleEnabled = bytes[PageDataPositions.SUBTITLE_POS_ENABLED_POS] & 0xFF;
         final int subtitleAlignment = bytes[PageDataPositions.SUBTITLE_POS_ALIGNMENT_POS] & 0xFF;
+        final String backgroundImage = readString(bytes, PageDataPositions.BACKGROUND_IMAGE_POS, BACKGROUND_IMAGE_STRING_NUM_BYTES);
 
         Color backgroundColour = Color.rgb(pageColourR, pageColourG, pageColourB);
         Color titleColor = Color.rgb(titleColourR, titleColourG, titleColourB);
@@ -78,7 +80,7 @@ public class PageSetupMessage {
         PageData pageData = new PageData((byte)pageId, backgroundColour, titleColor, subtitleColor, pageRows,
                 pageColumns, (byte)nextPageId, pageTransitionType, pageTransitionTime, pageDurationMs, title,
                 titleEnabled == 0x01, titleAlignment, subtitle, subtitleEnabled == 0x01,
-                subtitleAlignment);
+                subtitleAlignment, backgroundImage);
 
         return new PageSetupMessage(pageData);
     }

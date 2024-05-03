@@ -38,7 +38,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.common.networking.NetworkUtils.writeToMessage;
+import static com.bennero.common.messages.MessageUtils.writeToMessage;
 
 /**
  * HeartbeatSender sub-system manages sending heartbeat messages to the currently connected hardware monitor editor so

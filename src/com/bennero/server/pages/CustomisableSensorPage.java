@@ -27,14 +27,20 @@ import com.bennero.common.Constants;
 import com.bennero.common.PageData;
 import com.bennero.common.PageTemplate;
 import com.bennero.common.Sensor;
+import com.bennero.common.osspecific.OSUtils;
 import javafx.animation.Transition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,7 +75,7 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate {
 
     public CustomisableSensorPage(PageData pageData) {
         this.pageData = pageData;
-        super.setBackground(new Background(new BackgroundFill(pageData.getColour(), CornerRadii.EMPTY, Insets.EMPTY)));
+        setBackgroundFromData();
 
         headerPane = new VBox();
 
@@ -236,6 +242,7 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate {
         setSubtitle(pageData.getSubtitle());
         setSubtitleEnabled(pageData.isSubtitleEnabled());
         setSubtitleAlignment(pageData.getSubtitleAlignment());
+        setBackgroundImage(pageData.getBackgroundImage());
     }
 
     @Override
@@ -485,6 +492,41 @@ public class CustomisableSensorPage extends StackPane implements PageTemplate {
                 case Constants.TEXT_ALIGNMENT_RIGHT:
                     subtitleBox.setAlignment(Pos.CENTER_RIGHT);
                     break;
+            }
+        }
+    }
+
+    @Override
+    public String getBackgroundImage() {
+        return pageData.getBackgroundImage();
+    }
+
+    @Override
+    public void setBackgroundImage(String imageName) {
+        if(getBackgroundImage() != imageName) {
+            pageData.setBackgroundImage(imageName);
+            setBackgroundFromData();
+        }
+    }
+
+    private void setBackgroundFromData() {
+        if(pageData.getBackgroundImage().isEmpty()) {
+            super.setBackground(new Background(new BackgroundFill(pageData.getColour(), CornerRadii.EMPTY, Insets.EMPTY)));
+        } else {
+            // Load image file and set background
+            try {
+                File file = new File(OSUtils.getBackgroundImageDirectory() + "_in" + File.separator + pageData.getBackgroundImage());
+                if(!file.exists()) {
+                    return;
+                }
+
+                InputStream is = new FileInputStream(file);
+                Image image = new Image(is);
+
+                BackgroundSize backgroundSize = new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, false, true);
+                super.setBackground(new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, backgroundSize)));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
             }
         }
     }

@@ -21,41 +21,40 @@
  * =====================================================================================================================
  */
 
-package com.bennero.server.message;
+package com.bennero.server.event;
 
-import com.bennero.common.messages.SensorValueDataPositions;
-
-import static com.bennero.common.messages.MessageUtils.readFloat;
+import com.bennero.server.message.SensorTransformationMessage;
+import javafx.event.Event;
 
 /**
- * SensorDataMessage stores the data of a sensor update. It is not page dependent (any time the sensor with the given ID
- * is updated it is updated across all pages). The message is sent by a connected client only and contains the new value
- * for the sensor, and the ID of the sensor.
+ * FileTransferEvent creates an event that is used to provide a information on a file transfer that occurred
  *
  * @author Christian Benner
  * @version %I%, %G%
+ * @see Event
  * @since 1.0
  */
-public class SensorDataMessage {
-    private byte sensorId;
-    private float value;
+public class FileTransferEvent extends Event {
+    private final byte[] fileBytes;
+    private final String fileName;
+    private final byte type;
 
-    private SensorDataMessage(byte sensorId, float value) {
-        this.sensorId = sensorId;
-        this.value = value;
+    public FileTransferEvent(final byte[] fileBytes, final String fileName, byte type) {
+        super(fileName, null, null);
+        this.fileBytes = fileBytes;
+        this.fileName = fileName;
+        this.type = type;
     }
 
-    public static SensorDataMessage processSensorDataMessage(byte[] bytes) {
-        final int sensorId = bytes[SensorValueDataPositions.ID_POS] & 0xFF;
-        final float value = readFloat(bytes, SensorValueDataPositions.VALUE_POS);
-        return new SensorDataMessage((byte)sensorId, value);
+    public byte[] getFileBytes() {
+        return fileBytes;
     }
 
-    public byte getSensorId() {
-        return sensorId;
+    public String getFileName() {
+        return fileName;
     }
 
-    public float getValue() {
-        return value;
+    public byte getType() {
+        return type;
     }
 }

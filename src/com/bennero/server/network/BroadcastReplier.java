@@ -41,7 +41,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.common.networking.NetworkUtils.*;
+import static com.bennero.common.messages.MessageUtils.*;
 import static com.bennero.server.Version.*;
 
 /**

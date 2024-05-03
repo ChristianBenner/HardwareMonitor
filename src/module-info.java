@@ -34,5 +34,6 @@ module HardwareMonitor
     requires javafx.base;
     requires javafx.graphics;
     requires javafx.web;
+    requires com.fazecast.jSerialComm;
     requires HardwareMonitorCommon;
 }

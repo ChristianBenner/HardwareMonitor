@@ -27,6 +27,7 @@ import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import com.bennero.common.messages.ConnectionRequestReplyDataPositions;
 import com.bennero.common.messages.MessageType;
+import com.bennero.common.messages.MessageUtils;
 import com.bennero.common.networking.NetworkUtils;
 import com.bennero.server.SynchronizedConnection;
 import com.bennero.server.Version;
@@ -40,8 +41,8 @@ import java.io.InputStream;
 import java.nio.channels.SocketChannel;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.common.networking.NetworkUtils.isVersionCompatible;
-import static com.bennero.common.networking.NetworkUtils.writeStringToMessage;
+import static com.bennero.common.messages.MessageUtils.isVersionCompatible;
+import static com.bennero.common.messages.MessageUtils.writeStringToMessage;
 import static com.bennero.server.Version.*;
 import static com.bennero.server.message.ConnectionRequestMessage.processConnectionRequestMessageData;
 
@@ -195,7 +196,7 @@ public class Connection implements Runnable {
 
         // Is the version compatible
         boolean versionMismatch = isVersionCompatible(VERSION_MAJOR, VERSION_MINOR, message.getMajorVersion(),
-                message.getMinorVersion()) != NetworkUtils.Compatibility.COMPATIBLE;
+                message.getMinorVersion()) != MessageUtils.Compatibility.COMPATIBLE;
         boolean currentlyInUse = connection.isConnectionActive() && !message.isForceConnection();
 
         // Should we accept the connection or not
