@@ -2,6 +2,7 @@ package com.bennero.server.serial;
 
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.HeartbeatMessage;
 import com.bennero.common.messages.MessageType;
 import com.bennero.common.messages.MessageUtils;
 import com.bennero.server.event.*;
@@ -10,22 +11,21 @@ import com.fazecast.jSerialComm.SerialPort;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
 
+import java.util.UUID;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
-import static com.bennero.common.Constants.MESSAGE_NUM_BYTES;
-import static com.bennero.common.Constants.MESSAGE_TYPE_POS;
+import static com.bennero.common.Constants.*;
 import static com.bennero.server.Version.*;
 
 public class SerialListener {
     private static final String LOGGER_TAG = SerialListener.class.getSimpleName();
 
-    // todo: When UART device arrives check what the serial port name is
-//    private static final String RPI_SERIAL_PORT = "/dev/ttyS0";
-    private static final String RPI_SERIAL_PORT = "CNCB0";
-
+    private String port;
     private SerialPort serialPort;
     private boolean connected;
+    private UUID connectedUUID;
+    private UUID instanceUUID;
 
     private EventHandler disconnectedEvent;
     private EventHandler<PageSetupEvent> pageMessageReceived;
@@ -36,7 +36,8 @@ public class SerialListener {
     private EventHandler<SensorTransformationEvent> sensorTransformationMessageReceived;
     private EventHandler<FileTransferEvent> fileTransferEventHandler;
 
-    public SerialListener(EventHandler disconnectedEvent,
+    public SerialListener(String port,
+                          EventHandler disconnectedEvent,
                           EventHandler<PageSetupEvent> pageMessageReceived,
                           EventHandler<SensorSetupEvent> sensorMessageReceived,
                           EventHandler<RemovePageEvent> removePageMessageReceived,
@@ -44,6 +45,7 @@ public class SerialListener {
                           EventHandler<RemoveSensorEvent> removeSensorMessageReceived,
                           EventHandler<SensorTransformationEvent> sensorTransformationMessageReceived,
                           EventHandler<FileTransferEvent> fileTransferEventHandler) {
+        this.port = port;
         this.disconnectedEvent = disconnectedEvent;
         this.pageMessageReceived = pageMessageReceived;
         this.sensorMessageReceived = sensorMessageReceived;
@@ -52,8 +54,10 @@ public class SerialListener {
         this.removeSensorMessageReceived = removeSensorMessageReceived;
         this.sensorTransformationMessageReceived = sensorTransformationMessageReceived;
         this.fileTransferEventHandler = fileTransferEventHandler;
+        this.connectedUUID = null;
+        instanceUUID = UUID.randomUUID();
 
-        serialPort = SerialPort.getCommPort(RPI_SERIAL_PORT);
+        serialPort = SerialPort.getCommPort(port);
         Logger.log(LogLevel.INFO, LOGGER_TAG, "Attempting to use serial port: " + serialPort.getSystemPortName());
         connected = serialPort.openPort();
         if(!connected) {
@@ -65,7 +69,7 @@ public class SerialListener {
         serialPort.setNumDataBits(8);
         serialPort.setNumStopBits(1);
         serialPort.setParity(SerialPort.EVEN_PARITY);
-        serialPort.setComPortTimeouts(SerialPort.TIMEOUT_WRITE_BLOCKING | SerialPort.TIMEOUT_READ_BLOCKING, 0, 5000);
+        serialPort.setComPortTimeouts(SerialPort.TIMEOUT_WRITE_BLOCKING | SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
     }
 
     private boolean handshake(EventHandler<SerialConnectionEvent> handler) {
@@ -108,6 +112,8 @@ public class SerialListener {
     }
 
     private void readMessage(byte[] bytes) {
+        Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Received message of type: " + bytes[MESSAGE_TYPE_POS]);
+
         switch (bytes[MESSAGE_TYPE_POS]) {
             case MessageType.DATA:
                 sensorDataMessageReceived.handle(new SensorDataEvent(SensorDataMessage.processSensorDataMessage(bytes)));
@@ -123,6 +129,9 @@ public class SerialListener {
                 break;
             case MessageType.REMOVE_SENSOR:
                 removeSensorMessageReceived.handle(new RemoveSensorEvent(RemoveSensorMessage.processRemoveSensorMessage(bytes)));
+                break;
+            case MessageType.HEARTBEAT_MESSAGE:
+                handleHeartbeat(HeartbeatMessage.readHeartbeatMessage(bytes));
                 break;
             case MessageType.SENSOR_TRANSFORMATION_MESSAGE:
                 sensorTransformationMessageReceived.handle(new SensorTransformationEvent(SensorTransformationMessage.processSensorTransformationMessage(bytes)));
@@ -150,6 +159,25 @@ public class SerialListener {
         }
     }
 
+    private void handleHeartbeat(HeartbeatMessage heartbeatMessage) {
+        if (connectedUUID == null) {
+            connectedUUID = heartbeatMessage.getInstanceUuid();
+
+            byte[] returnMessage = HeartbeatMessage.create(instanceUUID, true);
+            serialPort.writeBytes(returnMessage, MESSAGE_NUM_BYTES);
+            return;
+        }
+
+        if (!connectedUUID.equals(heartbeatMessage.getInstanceUuid())) {
+            byte[] returnMessage = HeartbeatMessage.create(instanceUUID, false);
+            serialPort.writeBytes(returnMessage, MESSAGE_NUM_BYTES);
+            return;
+        }
+
+        byte[] returnMessage = HeartbeatMessage.create(instanceUUID, true);
+        serialPort.writeBytes(returnMessage, MESSAGE_NUM_BYTES);
+    }
+
     public void connect(EventHandler<SerialConnectionEvent> handler) {
         if(!connected) {
             return;
@@ -164,30 +192,42 @@ public class SerialListener {
             // Handshake successful now listen for messages from editor
             Logger.log(LogLevel.INFO, LOGGER_TAG, "Editor connection handshake successful");
             while (serialPort.isOpen()) {
-                // The total number of bytes to expect per message including the checksum bytes
-                int totalReadBytes = MESSAGE_NUM_BYTES + Long.BYTES;
-
-                byte[] bytes = new byte[totalReadBytes];
-                int numRead = serialPort.readBytes(bytes, totalReadBytes);
-                if (numRead < totalReadBytes) {
-                    Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected read amount on serial port: " +  numRead);
-                }
-
-                // The last 8 bytes of every message is a checksum
-                long receivedChecksum = MessageUtils.readLong(bytes, MESSAGE_NUM_BYTES);
-                Checksum checksum = new CRC32();
-                checksum.update(bytes, 0, MESSAGE_NUM_BYTES);
-                if(checksum.getValue() != receivedChecksum) {
-                    // err, ask for re-send
-                    Logger.log(LogLevel.ERROR, LOGGER_TAG, "Invalid checksum on received message");
-
-                    // Todo: when this happens we should flush the entire serial port buffer (throw away) as there may
-                    //  be some bad data there and respond to the hardware monitor editor stating bad message
-                } else {
-                    // Todo: respond to the hardware monitor stating good message
-                    readMessage(bytes);
-                }
+                read();
             }
         }).start();
+    }
+
+    private void read() {
+        // The total number of bytes to expect per message including the checksum bytes
+        int totalReadBytes = MESSAGE_NUM_BYTES + Long.BYTES;
+
+        byte[] bytes = new byte[totalReadBytes];
+        int numRead = serialPort.readBytes(bytes, totalReadBytes);
+        if (numRead < totalReadBytes) {
+            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected read amount on serial port: " +  numRead);
+        }
+
+        // The last 8 bytes of every message is a checksum
+        long receivedChecksum = MessageUtils.readLong(bytes, MESSAGE_NUM_BYTES);
+        Checksum checksum = new CRC32();
+        checksum.update(bytes, 0, MESSAGE_NUM_BYTES);
+        if(checksum.getValue() != receivedChecksum) {
+            // err, ask for re-send
+            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Invalid checksum on received message");
+
+            // Todo: when this happens we should flush the entire serial port buffer (throw away) as there may
+            //  be some bad data there and respond to the hardware monitor editor stating bad message
+            byte[] returnMessage = HeartbeatMessage.create(instanceUUID, false);
+            serialPort.writeBytes(returnMessage, MESSAGE_NUM_BYTES);
+        } else {
+            readMessage(bytes);
+
+            // Heartbeat message is handled differently
+            if (bytes[MESSAGE_TYPE_POS] != MessageType.HEARTBEAT_MESSAGE &&
+                    bytes[MESSAGE_TYPE_POS] != MessageType.VERSION_PARITY_MESSAGE) {
+                byte[] returnMessage = HeartbeatMessage.create(instanceUUID, true);
+                serialPort.writeBytes(returnMessage, MESSAGE_NUM_BYTES);
+            }
+        }
     }
 }

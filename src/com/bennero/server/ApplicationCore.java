@@ -72,11 +72,9 @@ import java.util.List;
  */
 public class ApplicationCore extends Application {
     enum CommunicationMode {
-        USB,
-        IP,
+        Serial,
+        Network,
     }
-
-    private static final CommunicationMode COMMUNICATION_MODE = CommunicationMode.USB;
 
     public static final int WINDOW_WIDTH_PX = 800;
     public static final int WINDOW_HEIGHT_PX = 480;
@@ -88,6 +86,7 @@ public class ApplicationCore extends Application {
     private Thread pageRollerThread;
     private Server server;
     private PageRoller pageRoller;
+    private CommunicationMode connectionMode;
 
     private DisconnectButton disconnectButton;
 
@@ -455,6 +454,7 @@ public class ApplicationCore extends Application {
     public void start(Stage stage) {
         boolean debugTerminal = false;
         boolean windowed = true;
+        String serialPort = "";
 
         // Process parameters
         List<String> parameterList = super.getParameters().getRaw();
@@ -477,6 +477,19 @@ public class ApplicationCore extends Application {
                 case "-f":
                 case "--fullscreen":
                     windowed = false;
+                    break;
+                case "--serial-port":
+                    if (parameterList.size() > i + 1 && !parameterList.get(i + 1).startsWith("--")) {
+                        connectionMode = CommunicationMode.Serial;
+                        serialPort = parameterList.get(i + 1);
+                        i++;
+                    } else {
+                        // Err no serial port defined
+                        Logger.log(LogLevel.ERROR, CLASS_NAME, "Serial port flag set but no port provided");
+                    }
+                    break;
+                default:
+                    connectionMode = CommunicationMode.Network;
                     break;
             }
         }
@@ -520,10 +533,12 @@ public class ApplicationCore extends Application {
         Logger.log(LogLevel.INFO, CLASS_NAME, "TEST1");
         stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
         Logger.log(LogLevel.INFO, CLASS_NAME, "TEST2");
-        switch (COMMUNICATION_MODE) {
-            case USB:
+        switch (connectionMode) {
+            case Serial:
                 Logger.log(LogLevel.INFO, CLASS_NAME, "TEST3");
-                SerialListener serialListener = new SerialListener(disconnectEvent -> onDisconnect(),
+                SerialListener serialListener = new SerialListener(
+                        serialPort,
+                        disconnectEvent -> onDisconnect(),
                         pageMessageEvent -> processPageMessageEvent(pageMessageEvent),
                         sensorMessageEvent -> processSensorMessageEvent(sensorMessageEvent),
                         removePageEvent -> processRemovePageEvent(removePageEvent),
@@ -546,7 +561,7 @@ public class ApplicationCore extends Application {
                 });
                 Logger.log(LogLevel.INFO, CLASS_NAME, "TEST6");
                 break;
-            case IP:
+            case Network:
                 if (!NetworkUtils.isConnected()) {
                     Logger.log(LogLevel.WARNING, CLASS_NAME, "Not connected to a network, opening connection page");
                     displayNetworkSelectionPage();
