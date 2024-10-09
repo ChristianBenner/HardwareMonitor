@@ -23,7 +23,6 @@
 
 package com.bennero.server.event;
 
-import com.bennero.server.message.SensorTransformationMessage;
 import javafx.event.Event;
 
 /**

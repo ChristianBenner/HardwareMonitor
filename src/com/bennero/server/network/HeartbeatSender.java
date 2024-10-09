@@ -25,10 +25,13 @@ package com.bennero.server.network;
 
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.HeartbeatMessage;
+import com.bennero.common.messages.Message;
 import com.bennero.common.messages.MessageType;
 import com.bennero.common.networking.NetworkUtils;
 import com.bennero.common.osspecific.OSUtils;
 import com.bennero.common.osspecific.RaspberryPiScreenUtils;
+import com.bennero.server.Identity;
 import com.bennero.server.SynchronizedConnection;
 
 import java.io.IOException;
@@ -109,11 +112,8 @@ class HeartbeatSender implements Runnable {
 
             if (connection.isConnectionActive()) {
                 // Write broadcast reply message
-                byte[] replyMessage = new byte[MESSAGE_NUM_BYTES];
-                replyMessage[MESSAGE_TYPE_POS] = MessageType.HEARTBEAT_MESSAGE;
-                writeToMessage(replyMessage, HW_HEARTBEAT_VALIDATION_NUMBER_POS, HW_HEARTBEAT_VALIDATION_NUMBER);
-
-                socketWriter.write(replyMessage, 0, MESSAGE_NUM_BYTES);
+                HeartbeatMessage out = new HeartbeatMessage(Identity.getMyUuid(), true);
+                socketWriter.write(out.write(), 0, Message.NUM_BYTES);
                 socketWriter.flush();
 
                 secondsConnectionLost = 0;

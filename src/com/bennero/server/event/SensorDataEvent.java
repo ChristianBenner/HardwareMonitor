@@ -23,7 +23,7 @@
 
 package com.bennero.server.event;
 
-import com.bennero.server.message.SensorDataMessage;
+import com.bennero.common.messages.SensorValueMessage;
 import javafx.event.Event;
 
 /**
@@ -32,23 +32,25 @@ import javafx.event.Event;
  *
  * @author Christian Benner
  * @version %I%, %G%
- * @see SensorDataMessage
+ * @see SensorValueMessage
  * @see Event
  * @since 1.0
  */
 public class SensorDataEvent extends Event {
-    private final SensorDataMessage sensorDataMessage;
+    private final byte sensorId;
+    private final float value;
 
-    public SensorDataEvent(final SensorDataMessage sensorDataMessage) {
-        super(sensorDataMessage, null, null);
-        this.sensorDataMessage = sensorDataMessage;
+    public SensorDataEvent(final SensorValueMessage message) {
+        super(message, null, null);
+        this.sensorId = message.getSensorId();
+        this.value = message.getValue();
     }
 
     public byte getSensorId() {
-        return sensorDataMessage.getSensorId();
+        return sensorId;
     }
 
     public float getValue() {
-        return sensorDataMessage.getValue();
+        return value;
     }
 }

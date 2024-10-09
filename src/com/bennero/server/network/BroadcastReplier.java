@@ -26,11 +26,12 @@ package com.bennero.server.network;
 import com.bennero.common.Constants;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
-import com.bennero.common.messages.BroadcastAnnouncementDataPositions;
-import com.bennero.common.messages.BroadcastReplyDataPositions;
+import com.bennero.common.messages.BroadcastAnnouncementMessage;
+import com.bennero.common.messages.BroadcastReplyMessage;
+import com.bennero.common.messages.Message;
 import com.bennero.common.messages.MessageType;
 import com.bennero.common.networking.AddressInformation;
-import com.bennero.server.message.BroadcastMessage;
+import com.bennero.server.Identity;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -91,15 +92,16 @@ class BroadcastReplier implements Runnable {
             datagramChannel.socket().bind(new InetSocketAddress(BROADCAST_RECEIVE_PORT));
 
             while (reply) {
-                ByteBuffer buf = ByteBuffer.allocate(MESSAGE_NUM_BYTES);
+                ByteBuffer buf = ByteBuffer.allocate(Message.NUM_BYTES);
                 buf.clear();
                 datagramChannel.receive(buf);
 
                 byte[] bytes = buf.array();
-                if (bytes[MESSAGE_TYPE_POS] == MessageType.BROADCAST_MESSAGE) {
-                    BroadcastMessage broadcastMessage = BroadcastMessage.processBroadcastMessageData(bytes);
-                    if (broadcastMessage.isVerifiedBroadcastMessage()) {
-                        writeBroadcastReplyMessage(broadcastMessage.getIp4Address());
+
+                if (Message.getType(bytes) == MessageType.BROADCAST) {
+                    BroadcastAnnouncementMessage in = new BroadcastAnnouncementMessage(bytes);
+                    if (in.getSystemIdentifier() == HW_EDITOR_SYSTEM_UNIQUE_CONNECTION_ID) {
+                        writeBroadcastReplyMessage(in.getIp4Address());
                     }
                 }
             }
@@ -126,18 +128,11 @@ class BroadcastReplier implements Runnable {
             Socket socket = new Socket(InetAddress.getByAddress(ip4Address), Constants.BROADCAST_REPLY_PORT);
             PrintStream broadcastReplyWriter = new PrintStream(socket.getOutputStream(), true);
 
-            // Write broadcast reply message
-            byte[] replyMessage = new byte[MESSAGE_NUM_BYTES];
-            replyMessage[MESSAGE_TYPE_POS] = MessageType.BROADCAST_REPLY_MESSAGE;
-            writeToMessage(replyMessage, BroadcastAnnouncementDataPositions.HW_SYSTEM_IDENTIFIER_POS, HW_MONITOR_SYSTEM_UNIQUE_CONNECTION_ID);
-            replyMessage[BroadcastReplyDataPositions.MAJOR_VERSION_POS] = VERSION_MAJOR;
-            replyMessage[BroadcastReplyDataPositions.MINOR_VERSION_POS] = VERSION_MINOR;
-            replyMessage[BroadcastReplyDataPositions.PATCH_VERSION_POS] = VERSION_PATCH;
-            writeBytesToMessage(replyMessage, BroadcastReplyDataPositions.MAC_ADDRESS_POS, siteLocalAddressInformation.getMacAddress(), MAC_ADDRESS_NUM_BYTES);
-            writeBytesToMessage(replyMessage, BroadcastReplyDataPositions.IP4_ADDRESS_POS, siteLocalAddressInformation.getIp4Address(), IP4_ADDRESS_NUM_BYTES);
-            writeStringToMessage(replyMessage, BroadcastReplyDataPositions.HOSTNAME_POS, siteLocalAddressInformation.getHostname(), NAME_STRING_NUM_BYTES);
-
-            broadcastReplyWriter.write(replyMessage, 0, MESSAGE_NUM_BYTES);
+            BroadcastReplyMessage out = new BroadcastReplyMessage(Identity.getMyUuid(), true,
+                    HW_MONITOR_SYSTEM_UNIQUE_CONNECTION_ID, VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH,
+                    siteLocalAddressInformation.getMacAddress(), siteLocalAddressInformation.getIp4Address(),
+                    siteLocalAddressInformation.getHostname());
+            broadcastReplyWriter.write(out.write(), 0, Message.NUM_BYTES);
 
             Logger.log(LogLevel.DEBUG, CLASS_NAME, "Sent broadcast acknowledgement to editor: " +
                     InetAddress.getByAddress(ip4Address));

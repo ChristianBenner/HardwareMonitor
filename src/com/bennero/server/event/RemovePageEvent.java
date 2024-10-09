@@ -23,28 +23,28 @@
 
 package com.bennero.server.event;
 
-import com.bennero.server.message.RemovePageMessage;
+import com.bennero.common.messages.PageRemoveMessage;
 import javafx.event.Event;
 
 /**
- * RemovePageEvent creates an event that is used to provide a RemovePageMessage object back to a listener through an
+ * RemovePageEvent creates an event that is used to provide a PageRemoveMessage object back to a listener through an
  * EventHandler
  *
  * @author Christian Benner
  * @version %I%, %G%
- * @see RemovePageMessage
+ * @see PageRemoveMessage
  * @see Event
  * @since 1.0
  */
 public class RemovePageEvent extends Event {
-    private final RemovePageMessage removePageMessage;
+    private final byte pageId;
 
-    public RemovePageEvent(final RemovePageMessage removePageMessage) {
-        super(removePageMessage, null, null);
-        this.removePageMessage = removePageMessage;
+    public RemovePageEvent(final PageRemoveMessage message) {
+        super(message, null, null);
+        this.pageId = message.getPageId();
     }
 
     public byte getPageId() {
-        return removePageMessage.getPageId();
+        return pageId;
     }
 }

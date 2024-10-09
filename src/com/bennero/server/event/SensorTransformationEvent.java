@@ -23,7 +23,7 @@
 
 package com.bennero.server.event;
 
-import com.bennero.server.message.SensorTransformationMessage;
+import com.bennero.common.messages.SensorTransformationMessage;
 import javafx.event.Event;
 
 /**
@@ -37,34 +37,44 @@ import javafx.event.Event;
  * @since 1.0
  */
 public class SensorTransformationEvent extends Event {
-    private final SensorTransformationMessage sensorTransformationMessage;
+    private final byte sensorId;
+    private final byte pageId;
+    private final byte row;
+    private final byte column;
+    private final byte rowSpan;
+    private final byte columnSpan;
 
-    public SensorTransformationEvent(final SensorTransformationMessage sensorTransformationMessage) {
-        super(sensorTransformationMessage, null, null);
-        this.sensorTransformationMessage = sensorTransformationMessage;
+    public SensorTransformationEvent(final SensorTransformationMessage message) {
+        super(message, null, null);
+        sensorId = message.getSensorId();
+        pageId = message.getPageId();
+        row = message.getRow();
+        column = message.getColumn();
+        rowSpan = message.getRowSpan();
+        columnSpan = message.getColumnSpan();
     }
 
     public byte getSensorId() {
-        return sensorTransformationMessage.getSensorId();
+        return sensorId;
     }
 
     public byte getPageId() {
-        return sensorTransformationMessage.getPageId();
+        return pageId;
     }
 
     public byte getRow() {
-        return sensorTransformationMessage.getRow();
+        return row;
     }
 
     public byte getColumn() {
-        return sensorTransformationMessage.getColumn();
+        return column;
     }
 
     public byte getRowSpan() {
-        return sensorTransformationMessage.getRowSpan();
+        return rowSpan;
     }
 
     public byte getColumnSpan() {
-        return sensorTransformationMessage.getColumnSpan();
+        return columnSpan;
     }
 }

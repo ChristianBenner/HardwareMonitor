@@ -2,20 +2,15 @@ package com.bennero.server.serial;
 
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
-import com.bennero.common.messages.HeartbeatMessage;
-import com.bennero.common.messages.MessageType;
-import com.bennero.common.messages.MessageUtils;
+import com.bennero.common.messages.*;
+import com.bennero.server.Identity;
 import com.bennero.server.event.*;
-import com.bennero.server.message.*;
 import com.fazecast.jSerialComm.SerialPort;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
 
 import java.util.UUID;
-import java.util.zip.CRC32;
-import java.util.zip.Checksum;
 
-import static com.bennero.common.Constants.*;
 import static com.bennero.server.Version.*;
 
 public class SerialListener {
@@ -25,7 +20,6 @@ public class SerialListener {
     private SerialPort serialPort;
     private boolean connected;
     private UUID connectedUUID;
-    private UUID instanceUUID;
 
     private EventHandler disconnectedEvent;
     private EventHandler<PageSetupEvent> pageMessageReceived;
@@ -55,7 +49,6 @@ public class SerialListener {
         this.sensorTransformationMessageReceived = sensorTransformationMessageReceived;
         this.fileTransferEventHandler = fileTransferEventHandler;
         this.connectedUUID = null;
-        instanceUUID = UUID.randomUUID();
 
         serialPort = SerialPort.getCommPort(port);
         Logger.log(LogLevel.INFO, LOGGER_TAG, "Attempting to use serial port: " + serialPort.getSystemPortName());
@@ -73,38 +66,40 @@ public class SerialListener {
     }
 
     private boolean handshake(EventHandler<SerialConnectionEvent> handler) {
-        byte[] readBuffer = new byte[MESSAGE_NUM_BYTES];
-        int numRead = serialPort.readBytes(readBuffer, MESSAGE_NUM_BYTES);
-        if (numRead < MESSAGE_NUM_BYTES) {
+        byte[] readBuffer = new byte[Message.NUM_BYTES];
+        int numRead = serialPort.readBytes(readBuffer, Message.NUM_BYTES);
+        if (numRead < Message.NUM_BYTES) {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected read amount on serial port: " +  numRead);
             Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(false, "Serial port error"));});
             return false;
         }
 
-        if(readBuffer[0] != MessageType.VERSION_PARITY_MESSAGE) {
+        if(Message.getType(readBuffer) != MessageType.VERSION_PARITY) {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected message type in response to version parity request: " +  readBuffer[0]);
             Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(false, "Bad editor data"));});
             return false;
         }
 
-        VersionParityMessage message = VersionParityMessage.processConnectionRequestMessageData(readBuffer);
+        VersionParityMessage in = new VersionParityMessage(readBuffer);
 
         // Announce connection request
         Logger.log(LogLevel.INFO, LOGGER_TAG, "Received version parity message");
 
         // Is the version compatible
         MessageUtils.Compatibility compatibility = MessageUtils.isVersionCompatible(VERSION_MAJOR, VERSION_MINOR,
-                message.getMajorVersion(), message.getMinorVersion());
+                in.getVersionMajor(), in.getVersionMinor());
         boolean accepted = compatibility == MessageUtils.Compatibility.COMPATIBLE;
-        byte[] response = VersionParityResponseMessage.create(accepted);
-        serialPort.writeBytes(response, MESSAGE_NUM_BYTES);
+
+        VersionParityResponseMessage out = new VersionParityResponseMessage(Identity.getMyUuid(), true,
+                VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, true);
+        serialPort.writeBytes(out.write(), Message.NUM_BYTES);
 
         if(accepted) {
             Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(true, ""));});
         } else {
             String formattedErr = String.format("Version mismatch: Editor[%d.%d.%d], Monitor[%d.%d.%d]",
-                    message.getMajorVersion(), message.getMinorVersion(), message.getPatchVersion(),
-                    VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+                    in.getVersionMajor(), in.getVersionMinor(), in.getVersionPatch(), VERSION_MAJOR, VERSION_MINOR,
+                    VERSION_PATCH);
             Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(false, formattedErr));});
         }
 
@@ -112,70 +107,71 @@ public class SerialListener {
     }
 
     private void readMessage(byte[] bytes) {
-        Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Received message of type: " + bytes[MESSAGE_TYPE_POS]);
+        byte type = Message.getType(bytes);
+        Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Received message of type: " + type);
 
-        switch (bytes[MESSAGE_TYPE_POS]) {
-            case MessageType.DATA:
-                sensorDataMessageReceived.handle(new SensorDataEvent(SensorDataMessage.processSensorDataMessage(bytes)));
+        switch (type) {
+            case MessageType.SENSOR_UPDATE:
+                sensorDataMessageReceived.handle(new SensorDataEvent(new SensorValueMessage(bytes)));
                 break;
-            case MessageType.PAGE_SETUP:
-                pageMessageReceived.handle(new PageSetupEvent(PageSetupMessage.readPageSetupMessage(bytes)));
+            case MessageType.PAGE_CREATE:
+                pageMessageReceived.handle(new PageSetupEvent(new PageCreateMessage(bytes)));
                 break;
-            case MessageType.SENSOR_SETUP:
-                sensorMessageReceived.handle(new SensorSetupEvent(SensorSetupMessage.processSensorSetupMessage(bytes)));
+            case MessageType.SENSOR_CREATE:
+                sensorMessageReceived.handle(new SensorSetupEvent(new SensorCreateMessage(bytes)));
                 break;
-            case MessageType.REMOVE_PAGE:
-                removePageMessageReceived.handle(new RemovePageEvent(RemovePageMessage.processRemovePageMessage(bytes)));
+            case MessageType.PAGE_REMOVE:
+                removePageMessageReceived.handle(new RemovePageEvent(new PageRemoveMessage(bytes)));
                 break;
-            case MessageType.REMOVE_SENSOR:
-                removeSensorMessageReceived.handle(new RemoveSensorEvent(RemoveSensorMessage.processRemoveSensorMessage(bytes)));
+            case MessageType.SENSOR_REMOVE:
+                removeSensorMessageReceived.handle(new RemoveSensorEvent(new SensorRemoveMessage(bytes)));
                 break;
-            case MessageType.HEARTBEAT_MESSAGE:
-                handleHeartbeat(HeartbeatMessage.readHeartbeatMessage(bytes));
+            case MessageType.HEARTBEAT:
+                handleHeartbeat(new HeartbeatMessage(bytes));
                 break;
-            case MessageType.SENSOR_TRANSFORMATION_MESSAGE:
-                sensorTransformationMessageReceived.handle(new SensorTransformationEvent(SensorTransformationMessage.processSensorTransformationMessage(bytes)));
+            case MessageType.SENSOR_TRANSFORM:
+                sensorTransformationMessageReceived.handle(new SensorTransformationEvent(new SensorTransformationMessage(bytes)));
                 break;
-            case MessageType.CONNECTION_REQUEST_MESSAGE:
+            case MessageType.CONNECTION_REQUEST:
          //       handleConnectionRequest(processConnectionRequestMessageData(bytes));
                 break;
-            case MessageType.DISCONNECT_MESSAGE:
+            case MessageType.DISCONNECT:
 //                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received disconnect message");
 //                handleDisconnect();
                 break;
-            case MessageType.FILE_MESSAGE:
-                FileMessage fileMessage = FileMessage.processConnectionRequestMessageData(bytes);
+            case MessageType.FILE_TRANSFER:
+                FileTransferMessage fileTransferMessage = new FileTransferMessage(bytes);
 
                 // The next read will be the file bytes so read here
-                int size = fileMessage.getSize();
-                byte[] fileBytes = new byte[size];
-                int numRead = serialPort.readBytes(fileBytes, size);
-                if (numRead < size) {
+                int numBytes = fileTransferMessage.getNumBytes();
+                byte[] fileBytes = new byte[numBytes];
+                int numRead = serialPort.readBytes(fileBytes, numBytes);
+                if (numRead < numBytes) {
                     Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected file read amount on serial port: " +  numRead);
                 }
 
-                fileTransferEventHandler.handle(new FileTransferEvent(fileBytes, fileMessage.getName(), fileMessage.getType()));
+                fileTransferEventHandler.handle(new FileTransferEvent(fileBytes, fileTransferMessage.getFilename(), fileTransferMessage.getTransferType()));
                 break;
         }
     }
 
     private void handleHeartbeat(HeartbeatMessage heartbeatMessage) {
         if (connectedUUID == null) {
-            connectedUUID = heartbeatMessage.getInstanceUuid();
+            connectedUUID = heartbeatMessage.getSenderUuid();
 
-            byte[] returnMessage = HeartbeatMessage.create(instanceUUID, true);
-            serialPort.writeBytes(returnMessage, MESSAGE_NUM_BYTES);
+            HeartbeatMessage out = new HeartbeatMessage(Identity.getMyUuid(), true);
+            serialPort.writeBytes(out.write(), Message.NUM_BYTES);
             return;
         }
 
-        if (!connectedUUID.equals(heartbeatMessage.getInstanceUuid())) {
-            byte[] returnMessage = HeartbeatMessage.create(instanceUUID, false);
-            serialPort.writeBytes(returnMessage, MESSAGE_NUM_BYTES);
+        if (!connectedUUID.equals(heartbeatMessage.getSenderUuid())) {
+            HeartbeatMessage out = new HeartbeatMessage(Identity.getMyUuid(), false);
+            serialPort.writeBytes(out.write(), Message.NUM_BYTES);
             return;
         }
 
-        byte[] returnMessage = HeartbeatMessage.create(instanceUUID, true);
-        serialPort.writeBytes(returnMessage, MESSAGE_NUM_BYTES);
+        HeartbeatMessage out = new HeartbeatMessage(Identity.getMyUuid(), true);
+        serialPort.writeBytes(out.write(), Message.NUM_BYTES);
     }
 
     public void connect(EventHandler<SerialConnectionEvent> handler) {
@@ -198,36 +194,24 @@ public class SerialListener {
     }
 
     private void read() {
-        // The total number of bytes to expect per message including the checksum bytes
-        int totalReadBytes = MESSAGE_NUM_BYTES + Long.BYTES;
-
-        byte[] bytes = new byte[totalReadBytes];
-        int numRead = serialPort.readBytes(bytes, totalReadBytes);
-        if (numRead < totalReadBytes) {
+        byte[] bytes = new byte[Message.NUM_BYTES];
+        int numRead = serialPort.readBytes(bytes, Message.NUM_BYTES);
+        if (numRead < Message.NUM_BYTES) {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected read amount on serial port: " +  numRead);
         }
 
-        // The last 8 bytes of every message is a checksum
-        long receivedChecksum = MessageUtils.readLong(bytes, MESSAGE_NUM_BYTES);
-        Checksum checksum = new CRC32();
-        checksum.update(bytes, 0, MESSAGE_NUM_BYTES);
-        if(checksum.getValue() != receivedChecksum) {
+        boolean valid = Message.isValid(bytes);
+        if (valid) {
             // err, ask for re-send
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Invalid checksum on received message");
 
             // Todo: when this happens we should flush the entire serial port buffer (throw away) as there may
             //  be some bad data there and respond to the hardware monitor editor stating bad message
-            byte[] returnMessage = HeartbeatMessage.create(instanceUUID, false);
-            serialPort.writeBytes(returnMessage, MESSAGE_NUM_BYTES);
         } else {
             readMessage(bytes);
-
-            // Heartbeat message is handled differently
-            if (bytes[MESSAGE_TYPE_POS] != MessageType.HEARTBEAT_MESSAGE &&
-                    bytes[MESSAGE_TYPE_POS] != MessageType.VERSION_PARITY_MESSAGE) {
-                byte[] returnMessage = HeartbeatMessage.create(instanceUUID, true);
-                serialPort.writeBytes(returnMessage, MESSAGE_NUM_BYTES);
-            }
         }
+
+        HeartbeatMessage out = new HeartbeatMessage(Identity.getMyUuid(), valid);
+        serialPort.writeBytes(out.write(), Message.NUM_BYTES);
     }
 }

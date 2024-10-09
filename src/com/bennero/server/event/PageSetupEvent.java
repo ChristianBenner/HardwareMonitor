@@ -24,8 +24,14 @@
 package com.bennero.server.event;
 
 import com.bennero.common.PageData;
-import com.bennero.server.message.PageSetupMessage;
+import com.bennero.common.messages.PageCreateMessage;
 import javafx.event.Event;
+import javafx.scene.paint.Color;
+
+import static com.bennero.common.Constants.BACKGROUND_IMAGE_STRING_NUM_BYTES;
+import static com.bennero.common.Constants.NAME_STRING_NUM_BYTES;
+import static com.bennero.common.messages.MessageUtils.readInt;
+import static com.bennero.common.messages.MessageUtils.readString;
 
 /**
  * PageSetupEvent creates an event that is used to provide a PageSetupMessage object back to a listener through an
@@ -33,19 +39,50 @@ import javafx.event.Event;
  *
  * @author Christian Benner
  * @version %I%, %G%
- * @see PageSetupMessage
+ * @see PageCreateMessage
  * @see Event
  * @since 1.0
  */
 public class PageSetupEvent extends Event {
-    private final PageSetupMessage pageSetupMessage;
+    private final PageData pageData;
 
-    public PageSetupEvent(final PageSetupMessage pageSetupMessage) {
-        super(pageSetupMessage, null, null);
-        this.pageSetupMessage = pageSetupMessage;
+    public PageSetupEvent(final PageCreateMessage message) {
+        super(message, null, null);
+
+//        final int colourR = message.getColourR() & 0xFF;
+//        final int colourG = message.getColourG() & 0xFF;
+//        final int colourB = message.getColourB() & 0xFF;
+//        final int titleColourR = message.getTitleColourR() & 0xFF;
+//        final int titleColourG = message.getTitleColourG() & 0xFF;
+//        final int titleColourB = message.getTitleColourB() & 0xFF;
+//        final int subtitleColourR = message.getSubtitleColourR() & 0xFF;
+//        final int subtitleColourG = message.getSubtitleColourG() & 0xFF;
+//        final int subtitleColourB = message.getSubtitleColourB() & 0xFF;
+//        final int rows = message.getRows() & 0xFF;
+//        final int columns = message.getColumns()& 0xFF;
+//        final int transitionType = message.getTransitionType() & 0xFF;
+//        final int titleAlignment = message.getTitleAlignment() & 0xFF;
+//        final int subtitleAlignment = message.getSubtitleAlignment() & 0xFF;
+//
+        pageData = new PageData(
+                message.getPageId(),
+                toColor(message.getColourR(), message.getColourG(), message.getColourB()),
+                toColor(message.getTitleColourR(), message.getTitleColourG(), message.getTitleColourB()),
+                toColor(message.getSubtitleColourR(), message.getSubtitleColourG(), message.getSubtitleColourB()),
+                message.getRows() & 0xFF, message.getColumns() & 0xFF,
+                message.getNextPageId(),
+                message.getTransitionType() & 0xFF, message.getTransitionTime(), message.getDurationMs(),
+                message.getTitle(), message.isTitleEnabled(), message.getTitleAlignment() & 0xFF,
+                message.getSubtitle(), message.isSubtitleEnabled(), message.getSubtitleAlignment() & 0xFF,
+                message.getBackgroundImage()
+        );
+    }
+
+    private Color toColor(byte r, byte g, byte b) {
+        return Color.rgb(r & 0xFF, g & 0xFF, b & 0xFF);
     }
 
     public PageData getPageData() {
-        return pageSetupMessage.getPageData();
+        return pageData;
     }
 }

@@ -25,14 +25,12 @@ package com.bennero.server.network;
 
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
-import com.bennero.common.messages.ConnectionRequestReplyDataPositions;
-import com.bennero.common.messages.MessageType;
-import com.bennero.common.messages.MessageUtils;
+import com.bennero.common.messages.*;
 import com.bennero.common.networking.NetworkUtils;
+import com.bennero.server.Identity;
 import com.bennero.server.SynchronizedConnection;
 import com.bennero.server.Version;
 import com.bennero.server.event.*;
-import com.bennero.server.message.*;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 
@@ -40,11 +38,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.SocketChannel;
 
-import static com.bennero.common.Constants.*;
 import static com.bennero.common.messages.MessageUtils.isVersionCompatible;
-import static com.bennero.common.messages.MessageUtils.writeStringToMessage;
 import static com.bennero.server.Version.*;
-import static com.bennero.server.message.ConnectionRequestMessage.processConnectionRequestMessageData;
 
 /**
  * The Connection class is responsible for handling an active connection to the server. Each connection is handled
@@ -137,8 +132,8 @@ public class Connection implements Runnable {
 
             byte[] bytes;
             while (!stop && socketChannel.isOpen()) {
-                bytes = new byte[MESSAGE_NUM_BYTES];
-                is.read(bytes, 0, MESSAGE_NUM_BYTES);
+                bytes = new byte[Message.NUM_BYTES];
+                is.read(bytes, 0, Message.NUM_BYTES);
                 readMessage(bytes);
             }
 
@@ -156,29 +151,29 @@ public class Connection implements Runnable {
     }
 
     private void readMessage(byte[] bytes) {
-        switch (bytes[MESSAGE_TYPE_POS]) {
-            case MessageType.DATA:
-                sensorDataMessageReceived.handle(new SensorDataEvent(SensorDataMessage.processSensorDataMessage(bytes)));
+        switch (Message.getType(bytes)) {
+            case MessageType.SENSOR_UPDATE:
+                sensorDataMessageReceived.handle(new SensorDataEvent(new SensorValueMessage(bytes)));
                 break;
-            case MessageType.PAGE_SETUP:
-                pageMessageReceived.handle(new PageSetupEvent(PageSetupMessage.readPageSetupMessage(bytes)));
+            case MessageType.PAGE_CREATE:
+                pageMessageReceived.handle(new PageSetupEvent(new PageCreateMessage(bytes)));
                 break;
-            case MessageType.SENSOR_SETUP:
-                sensorMessageReceived.handle(new SensorSetupEvent(SensorSetupMessage.processSensorSetupMessage(bytes)));
+            case MessageType.SENSOR_CREATE:
+                sensorMessageReceived.handle(new SensorSetupEvent(new SensorCreateMessage(bytes)));
                 break;
-            case MessageType.REMOVE_PAGE:
-                removePageMessageReceived.handle(new RemovePageEvent(RemovePageMessage.processRemovePageMessage(bytes)));
+            case MessageType.PAGE_REMOVE:
+                removePageMessageReceived.handle(new RemovePageEvent(new PageRemoveMessage(bytes)));
                 break;
-            case MessageType.REMOVE_SENSOR:
-                removeSensorMessageReceived.handle(new RemoveSensorEvent(RemoveSensorMessage.processRemoveSensorMessage(bytes)));
+            case MessageType.SENSOR_REMOVE:
+                removeSensorMessageReceived.handle(new RemoveSensorEvent(new SensorRemoveMessage(bytes)));
                 break;
-            case MessageType.SENSOR_TRANSFORMATION_MESSAGE:
-                sensorTransformationMessageReceived.handle(new SensorTransformationEvent(SensorTransformationMessage.processSensorTransformationMessage(bytes)));
+            case MessageType.SENSOR_TRANSFORM:
+                sensorTransformationMessageReceived.handle(new SensorTransformationEvent(new SensorTransformationMessage(bytes)));
                 break;
-            case MessageType.CONNECTION_REQUEST_MESSAGE:
-                handleConnectionRequest(processConnectionRequestMessageData(bytes));
+            case MessageType.CONNECTION_REQUEST:
+                handleConnectionRequest(new ConnectionRequestMessage(bytes));
                 break;
-            case MessageType.DISCONNECT_MESSAGE:
+            case MessageType.DISCONNECT:
                 Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received disconnect message");
                 handleDisconnect();
                 break;
@@ -191,12 +186,12 @@ public class Connection implements Runnable {
 
         // Announce connection request
         Logger.log(LogLevel.INFO, CLASS_NAME, "Received connection request message from '" +
-                message.getHostname() + "' v(" + message.getMajorVersion() + "." + message.getMinorVersion() + "." +
-                message.getPatchVersion() + ")");
+                message.getHostname() + "' v(" + message.getVersionMajor() + "." + message.getVersionMinor() + "." +
+                message.getVersionPatch() + ")");
 
         // Is the version compatible
-        boolean versionMismatch = isVersionCompatible(VERSION_MAJOR, VERSION_MINOR, message.getMajorVersion(),
-                message.getMinorVersion()) != MessageUtils.Compatibility.COMPATIBLE;
+        boolean versionMismatch = isVersionCompatible(VERSION_MAJOR, VERSION_MINOR, message.getVersionMajor(),
+                message.getVersionMinor()) != MessageUtils.Compatibility.COMPATIBLE;
         boolean currentlyInUse = connection.isConnectionActive() && !message.isForceConnection();
 
         // Should we accept the connection or not
@@ -206,24 +201,24 @@ public class Connection implements Runnable {
             sendConnectionRequestReplyMessage(true, false, false);
 
             Logger.log(LogLevel.INFO, CLASS_NAME, "Accepted connection request message from '" + message.
-                    getHostname() + "' v(" + message.getMajorVersion() + "." + message.getMinorVersion() + "." +
-                    message.getPatchVersion() + ")");
+                    getHostname() + "' v(" + message.getVersionMajor() + "." + message.getVersionMinor() + "." +
+                    message.getVersionPatch() + ")");
             connection.setConnection(this);
         } else {
             if (versionMismatch) {
                 sendConnectionRequestReplyMessage(false, true, currentlyInUse);
 
                 Logger.log(LogLevel.WARNING, CLASS_NAME, "Rejected connection request message from '" +
-                        message.getHostname() + "' v(" + message.getMajorVersion() + "." + message.
-                        getMinorVersion() + "." + message.getPatchVersion() + ") because the client version " +
+                        message.getHostname() + "' v(" + message.getVersionMajor() + "." + message.
+                        getVersionMinor() + "." + message.getVersionPatch() + ") because the client version " +
                         "is not compatible with the monitor version (" + Version.getVersionString() + ")");
             } else if (currentlyInUse) {
                 sendConnectionRequestReplyMessage(false, false, true,
                         connection.getClientHostname());
 
                 Logger.log(LogLevel.WARNING, CLASS_NAME, "Rejected connection request message from '" +
-                        message.getHostname() + "' v(" + message.getMajorVersion() + "." + message.
-                        getMinorVersion() + "." + message.getPatchVersion() + ") because the monitor is " +
+                        message.getHostname() + "' v(" + message.getVersionMajor() + "." + message.
+                        getVersionMinor() + "." + message.getVersionPatch() + ") because the monitor is " +
                         "currently in use by '" + connection.getClientHostname() + "'");
             }
 
@@ -252,22 +247,12 @@ public class Connection implements Runnable {
                                                    boolean versionMismatch,
                                                    boolean currentlyInUse,
                                                    final String hostname) {
-        byte[] message = new byte[MESSAGE_NUM_BYTES];
-        message[MESSAGE_TYPE_POS] = MessageType.CONNECTION_REQUEST_RESPONSE_MESSAGE;
-        message[ConnectionRequestReplyDataPositions.MAJOR_VERSION_POS] = VERSION_MAJOR;
-        message[ConnectionRequestReplyDataPositions.MINOR_VERSION_POS] = VERSION_MINOR;
-        message[ConnectionRequestReplyDataPositions.PATCH_VERSION_POS] = VERSION_PATCH;
-        message[ConnectionRequestReplyDataPositions.CONNECTION_ACCEPTED] = acceptConnection ? (byte) 0x01 : 0x00;
-        message[ConnectionRequestReplyDataPositions.VERSION_MISMATCH] = versionMismatch ? (byte) 0x01 : 0x00;
-        message[ConnectionRequestReplyDataPositions.CURRENTLY_IN_USE] = currentlyInUse ? (byte) 0x01 : 0x00;
-
-        if (hostname != null) {
-            writeStringToMessage(message, ConnectionRequestReplyDataPositions.CURRENT_CLIENT_HOSTNAME, hostname,
-                    NAME_STRING_NUM_BYTES);
-        }
+        ConnectionRequestResponseMessage out = new ConnectionRequestResponseMessage(Identity.getMyUuid(), true,
+                VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, acceptConnection, versionMismatch, currentlyInUse,
+                hostname == null ? "" : hostname);
 
         try {
-            socketChannel.socket().getOutputStream().write(message, 0, MESSAGE_NUM_BYTES);
+            socketChannel.socket().getOutputStream().write(out.write(), 0, Message.NUM_BYTES);
             Logger.log(LogLevel.DEBUG, CLASS_NAME, "Sent connection request reply message");
             socketChannel.socket().getOutputStream().flush();
 

@@ -24,7 +24,6 @@
 package com.bennero.server.event;
 
 import com.bennero.common.networking.DiscoveredNetwork;
-import com.bennero.server.message.SensorDataMessage;
 import javafx.event.Event;
 
 /**
@@ -33,7 +32,6 @@ import javafx.event.Event;
  *
  * @author Christian Benner
  * @version %I%, %G%
- * @see SensorDataMessage
  * @see Event
  * @since 1.0
  */

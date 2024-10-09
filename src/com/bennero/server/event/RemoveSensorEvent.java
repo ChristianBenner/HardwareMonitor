@@ -23,7 +23,7 @@
 
 package com.bennero.server.event;
 
-import com.bennero.server.message.RemoveSensorMessage;
+import com.bennero.common.messages.SensorRemoveMessage;
 import javafx.event.Event;
 
 /**
@@ -32,23 +32,25 @@ import javafx.event.Event;
  *
  * @author Christian Benner
  * @version %I%, %G%
- * @see RemoveSensorMessage
+ * @see SensorRemoveMessage
  * @see Event
  * @since 1.0
  */
 public class RemoveSensorEvent extends Event {
-    private final RemoveSensorMessage removeSensorMessage;
+    private final byte sensorId;
+    private final byte pageId;
 
-    public RemoveSensorEvent(final RemoveSensorMessage removeSensorMessage) {
+    public RemoveSensorEvent(final SensorRemoveMessage removeSensorMessage) {
         super(removeSensorMessage, null, null);
-        this.removeSensorMessage = removeSensorMessage;
+        this.sensorId = removeSensorMessage.getSensorId();
+        this.pageId = removeSensorMessage.getPageId();
     }
 
     public byte getSensorId() {
-        return removeSensorMessage.getSensorId();
+        return sensorId;
     }
 
     public byte getPageId() {
-        return removeSensorMessage.getPageId();
+        return pageId;
     }
 }
