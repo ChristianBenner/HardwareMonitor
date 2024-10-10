@@ -90,16 +90,20 @@ public class SerialListener {
                 in.getVersionMajor(), in.getVersionMinor());
         boolean accepted = compatibility == MessageUtils.Compatibility.COMPATIBLE;
 
-        VersionParityResponseMessage out = new VersionParityResponseMessage(Identity.getMyUuid(), true,
-                VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, true);
-        serialPort.writeBytes(out.write(), Message.NUM_BYTES);
-
         if(accepted) {
+            VersionParityResponseMessage out = new VersionParityResponseMessage(Identity.getMyUuid(), true,
+                    VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, true, "");
+            serialPort.writeBytes(out.write(), Message.NUM_BYTES);
+
             Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(true, ""));});
         } else {
             String formattedErr = String.format("Version mismatch: Editor[%d.%d.%d], Monitor[%d.%d.%d]",
                     in.getVersionMajor(), in.getVersionMinor(), in.getVersionPatch(), VERSION_MAJOR, VERSION_MINOR,
                     VERSION_PATCH);
+            VersionParityResponseMessage out = new VersionParityResponseMessage(Identity.getMyUuid(), true,
+                    VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, true, formattedErr);
+            serialPort.writeBytes(out.write(), Message.NUM_BYTES);
+
             Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(false, formattedErr));});
         }
 

@@ -28,11 +28,6 @@ import com.bennero.common.messages.PageCreateMessage;
 import javafx.event.Event;
 import javafx.scene.paint.Color;
 
-import static com.bennero.common.Constants.BACKGROUND_IMAGE_STRING_NUM_BYTES;
-import static com.bennero.common.Constants.NAME_STRING_NUM_BYTES;
-import static com.bennero.common.messages.MessageUtils.readInt;
-import static com.bennero.common.messages.MessageUtils.readString;
-
 /**
  * PageSetupEvent creates an event that is used to provide a PageSetupMessage object back to a listener through an
  * EventHandler
