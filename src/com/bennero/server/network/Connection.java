@@ -153,7 +153,7 @@ public class Connection implements Runnable {
     private void readMessage(byte[] bytes) {
         switch (Message.getType(bytes)) {
             case MessageType.SENSOR_UPDATE:
-                sensorDataMessageReceived.handle(new SensorDataEvent(new SensorValueMessage(bytes)));
+                sensorDataMessageReceived.handle(new SensorDataEvent(new SensorUpdateMessage(bytes)));
                 break;
             case MessageType.PAGE_CREATE:
                 pageMessageReceived.handle(new PageSetupEvent(new PageCreateMessage(bytes)));

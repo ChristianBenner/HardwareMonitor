@@ -74,6 +74,11 @@ public class SerialListener {
             return false;
         }
 
+        if (!Message.isValid(readBuffer)) {
+            Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Corrupted message received: checksum mismatch");
+            return false;
+        }
+
         if(Message.getType(readBuffer) != MessageType.VERSION_PARITY) {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected message type in response to version parity request: " +  readBuffer[0]);
             Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(false, "Bad editor data"));});
@@ -91,6 +96,9 @@ public class SerialListener {
         boolean accepted = compatibility == MessageUtils.Compatibility.COMPATIBLE;
 
         if(accepted) {
+            connectedUUID = in.getSenderUuid();
+            Logger.log(LogLevel.INFO, LOGGER_TAG, "Editor connected: " + connectedUUID.toString());
+
             VersionParityResponseMessage out = new VersionParityResponseMessage(Identity.getMyUuid(), true,
                     VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, true, "");
             serialPort.writeBytes(out.write(), Message.NUM_BYTES);
@@ -110,13 +118,16 @@ public class SerialListener {
         return accepted;
     }
 
-    private void readMessage(byte[] bytes) {
+    private boolean readMessage(byte[] bytes) {
+        boolean valid = true;
         byte type = Message.getType(bytes);
-        Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Received message of type: " + type);
+       // if (type != MessageType.SENSOR_UPDATE) {
+            Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Received message [Type: %s]", MessageType.asString(type));
+       // }
 
         switch (type) {
             case MessageType.SENSOR_UPDATE:
-                sensorDataMessageReceived.handle(new SensorDataEvent(new SensorValueMessage(bytes)));
+                sensorDataMessageReceived.handle(new SensorDataEvent(new SensorUpdateMessage(bytes)));
                 break;
             case MessageType.PAGE_CREATE:
                 pageMessageReceived.handle(new PageSetupEvent(new PageCreateMessage(bytes)));
@@ -131,7 +142,7 @@ public class SerialListener {
                 removeSensorMessageReceived.handle(new RemoveSensorEvent(new SensorRemoveMessage(bytes)));
                 break;
             case MessageType.HEARTBEAT:
-                handleHeartbeat(new HeartbeatMessage(bytes));
+                valid = handleHeartbeat(new HeartbeatMessage(bytes));
                 break;
             case MessageType.SENSOR_TRANSFORM:
                 sensorTransformationMessageReceived.handle(new SensorTransformationEvent(new SensorTransformationMessage(bytes)));
@@ -157,25 +168,16 @@ public class SerialListener {
                 fileTransferEventHandler.handle(new FileTransferEvent(fileBytes, fileTransferMessage.getFilename(), fileTransferMessage.getTransferType()));
                 break;
         }
+
+        return valid;
     }
 
-    private void handleHeartbeat(HeartbeatMessage heartbeatMessage) {
-        if (connectedUUID == null) {
-            connectedUUID = heartbeatMessage.getSenderUuid();
-
-            HeartbeatMessage out = new HeartbeatMessage(Identity.getMyUuid(), true);
-            serialPort.writeBytes(out.write(), Message.NUM_BYTES);
-            return;
-        }
-
+    private boolean handleHeartbeat(HeartbeatMessage heartbeatMessage) {
         if (!connectedUUID.equals(heartbeatMessage.getSenderUuid())) {
-            HeartbeatMessage out = new HeartbeatMessage(Identity.getMyUuid(), false);
-            serialPort.writeBytes(out.write(), Message.NUM_BYTES);
-            return;
+            return false;
         }
 
-        HeartbeatMessage out = new HeartbeatMessage(Identity.getMyUuid(), true);
-        serialPort.writeBytes(out.write(), Message.NUM_BYTES);
+        return true;
     }
 
     public void connect(EventHandler<SerialConnectionEvent> handler) {
@@ -205,17 +207,17 @@ public class SerialListener {
         }
 
         boolean valid = Message.isValid(bytes);
-        if (valid) {
+        if (!valid) {
             // err, ask for re-send
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Invalid checksum on received message");
 
             // Todo: when this happens we should flush the entire serial port buffer (throw away) as there may
             //  be some bad data there and respond to the hardware monitor editor stating bad message
         } else {
-            readMessage(bytes);
+            valid = readMessage(bytes);
         }
 
-        HeartbeatMessage out = new HeartbeatMessage(Identity.getMyUuid(), valid);
+        ConfirmationMessage out = new ConfirmationMessage(Identity.getMyUuid(), valid);
         serialPort.writeBytes(out.write(), Message.NUM_BYTES);
     }
 }
