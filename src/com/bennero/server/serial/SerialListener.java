@@ -109,7 +109,7 @@ public class SerialListener {
                     in.getVersionMajor(), in.getVersionMinor(), in.getVersionPatch(), VERSION_MAJOR, VERSION_MINOR,
                     VERSION_PATCH);
             VersionParityResponseMessage out = new VersionParityResponseMessage(Identity.getMyUuid(), true,
-                    VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, true, formattedErr);
+                    VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, false, formattedErr);
             serialPort.writeBytes(out.write(), Message.NUM_BYTES);
 
             Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(false, formattedErr));});
