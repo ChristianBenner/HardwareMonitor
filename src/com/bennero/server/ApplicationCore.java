@@ -320,13 +320,20 @@ public class ApplicationCore extends Application {
             pageRoller.removeAllPages();
             sensorMap.clear();
 
-            try {
-                server.disconnectActiveConnection();
-            } catch (InterruptedException e) {
-                Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to disconnect active connection");
-                Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
+            switch (connectionMode) {
+                case Serial:
+                    displaySerialAwaitingConnectionPage(null);
+                    break;
+                case Network:
+                    try {
+                        server.disconnectActiveConnection();
+                    } catch (InterruptedException e) {
+                        Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to disconnect active connection");
+                        Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
+                    }
+                    displayWaitingForConnectionPage();
+                    break;
             }
-            displayWaitingForConnectionPage();
         });
     }
 

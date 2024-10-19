@@ -147,8 +147,9 @@ public class SerialListener {
          //       handleConnectionRequest(processConnectionRequestMessageData(bytes));
                 break;
             case MessageType.DISCONNECT:
-//                Logger.log(LogLevel.DEBUG, CLASS_NAME, "Received disconnect message");
-//                handleDisconnect();
+                connected = false;
+                connectedUUID = null;
+                disconnectedEvent.handle(null);
                 break;
             case MessageType.FILE_TRANSFER:
                 FileTransferMessage fileTransferMessage = new FileTransferMessage(bytes);
