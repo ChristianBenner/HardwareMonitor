@@ -52,8 +52,7 @@ public class SerialListener {
 
         serialPort = SerialPort.getCommPort(port);
         Logger.log(LogLevel.INFO, LOGGER_TAG, "Attempting to use serial port: " + serialPort.getSystemPortName());
-        connected = serialPort.openPort();
-        if(!connected) {
+        if(!serialPort.openPort()) {
             return;
         }
 
@@ -65,57 +64,54 @@ public class SerialListener {
         serialPort.setComPortTimeouts(SerialPort.TIMEOUT_WRITE_BLOCKING | SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
     }
 
-    private boolean handshake(EventHandler<SerialConnectionEvent> handler) {
-        byte[] readBuffer = new byte[Message.NUM_BYTES];
-        int numRead = serialPort.readBytes(readBuffer, Message.NUM_BYTES);
-        if (numRead < Message.NUM_BYTES) {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected read amount on serial port: " +  numRead);
-            Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(false, "Serial port error"));});
-            return false;
-        }
-
-        if (!Message.isValid(readBuffer)) {
-            Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Corrupted message received: checksum mismatch");
-            return false;
-        }
-
-        if(Message.getType(readBuffer) != MessageType.VERSION_PARITY) {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected message type in response to version parity request: " +  readBuffer[0]);
-            Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(false, "Bad editor data"));});
-            return false;
-        }
-
-        VersionParityMessage in = new VersionParityMessage(readBuffer);
+    private boolean handshake(byte[] bytes, EventHandler<SerialConnectionEvent> handler) {
+        VersionParityMessage in = new VersionParityMessage(bytes);
 
         // Announce connection request
         Logger.log(LogLevel.INFO, LOGGER_TAG, "Received version parity message");
 
+        // Check if we are already connected to a different editor. It's valid to respond to the connected editor
+        // because it may be disconnected from its side and trying to re-connect.
+        boolean connectedToDifferentEditor = connected && connectedUUID != null && !connectedUUID.equals(in.getSenderUuid());
+        if (connectedToDifferentEditor) {
+            String rejectionReason = "Monitor is already connected to a different editor";
+            VersionParityResponseMessage out = new VersionParityResponseMessage(Identity.getMyUuid(), true,
+                    VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, false, rejectionReason);
+            serialPort.writeBytes(out.write(), Message.NUM_BYTES);
+            return false;
+        }
+
         // Is the version compatible
         MessageUtils.Compatibility compatibility = MessageUtils.isVersionCompatible(VERSION_MAJOR, VERSION_MINOR,
                 in.getVersionMajor(), in.getVersionMinor());
-        boolean accepted = compatibility == MessageUtils.Compatibility.COMPATIBLE;
-
-        if(accepted) {
-            connectedUUID = in.getSenderUuid();
-            Logger.log(LogLevel.INFO, LOGGER_TAG, "Editor connected: " + connectedUUID.toString());
-
-            VersionParityResponseMessage out = new VersionParityResponseMessage(Identity.getMyUuid(), true,
-                    VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, true, "");
-            serialPort.writeBytes(out.write(), Message.NUM_BYTES);
-
-            Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(true, ""));});
-        } else {
+        boolean compatible = compatibility == MessageUtils.Compatibility.COMPATIBLE;
+        if(!compatible) {
             String formattedErr = String.format("Version mismatch: Editor[%d.%d.%d], Monitor[%d.%d.%d]",
                     in.getVersionMajor(), in.getVersionMinor(), in.getVersionPatch(), VERSION_MAJOR, VERSION_MINOR,
                     VERSION_PATCH);
             VersionParityResponseMessage out = new VersionParityResponseMessage(Identity.getMyUuid(), true,
-                    VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, true, formattedErr);
+                    VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, false, formattedErr);
             serialPort.writeBytes(out.write(), Message.NUM_BYTES);
 
             Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(false, formattedErr));});
+            return false;
         }
 
-        return accepted;
+        boolean alreadyConnected = connectedUUID != null && connectedUUID.equals(in.getSenderUuid());
+        if (!alreadyConnected) {
+            connectedUUID = in.getSenderUuid();
+            connected = true;
+            Logger.log(LogLevel.INFO, LOGGER_TAG, "Editor connected: " + connectedUUID.toString());
+            Platform.runLater(() -> {handler.handle(new SerialConnectionEvent(true, ""));});
+        } else {
+            Logger.log(LogLevel.INFO, LOGGER_TAG, "Editor already connected: " + connectedUUID.toString());
+        }
+
+        VersionParityResponseMessage out = new VersionParityResponseMessage(Identity.getMyUuid(), true,
+                VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, true, "");
+        serialPort.writeBytes(out.write(), Message.NUM_BYTES);
+
+        return true;
     }
 
     private boolean readMessage(byte[] bytes) {
@@ -181,27 +177,28 @@ public class SerialListener {
     }
 
     public void connect(EventHandler<SerialConnectionEvent> handler) {
-        if(!connected) {
+        if(!serialPort.isOpen()) {
             return;
         }
 
         new Thread(() -> {
-            Logger.log(LogLevel.INFO, LOGGER_TAG, "Attempting to connect via serial");
-            while(!handshake(handler)) {
-                Logger.log(LogLevel.INFO, LOGGER_TAG, "Re-attempting serial connection");
-            }
-
             // Handshake successful now listen for messages from editor
-            Logger.log(LogLevel.INFO, LOGGER_TAG, "Editor connection handshake successful");
             while (serialPort.isOpen()) {
-                read();
+                read(handler);
             }
         }).start();
     }
 
-    private void read() {
+    private void read(EventHandler<SerialConnectionEvent> handler) {
         byte[] bytes = new byte[Message.NUM_BYTES];
         int numRead = serialPort.readBytes(bytes, Message.NUM_BYTES);
+        if (numRead == -1) {
+            Logger.logf(LogLevel.WARNING, LOGGER_TAG, "Failed to read from serial port");
+            connected = false;
+            connectedUUID = null;
+            return;
+        }
+
         if (numRead < Message.NUM_BYTES) {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected read amount on serial port: " +  numRead);
         }
@@ -213,10 +210,26 @@ public class SerialListener {
 
             // Todo: when this happens we should flush the entire serial port buffer (throw away) as there may
             //  be some bad data there and respond to the hardware monitor editor stating bad message
-        } else {
-            valid = readMessage(bytes);
+
+            ConfirmationMessage out = new ConfirmationMessage(Identity.getMyUuid(), false);
+            serialPort.writeBytes(out.write(), Message.NUM_BYTES);
+            return;
         }
 
+        if (Message.getType(bytes) == MessageType.VERSION_PARITY) {
+            handshake(bytes, handler);
+            return;
+        }
+
+        // Check if the message came from the monitor we are connected to
+        UUID senderUuid = Message.getSenderUUID(bytes);
+        if (connectedUUID == null || !senderUuid.equals(connectedUUID)) {
+            Logger.logf(LogLevel.WARNING, LOGGER_TAG, "Warning, received message from device that is not connected [From: %s] [Connected: %s]", senderUuid.toString(), connectedUUID.toString());
+            // Do not reply in this scenario
+            return;
+        }
+
+        valid = readMessage(bytes);
         ConfirmationMessage out = new ConfirmationMessage(Identity.getMyUuid(), valid);
         serialPort.writeBytes(out.write(), Message.NUM_BYTES);
     }
