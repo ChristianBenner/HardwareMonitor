@@ -59,10 +59,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Application class that controls all of the hardware monitor subsystems
@@ -223,7 +221,7 @@ public class ApplicationCore extends Application {
         mainPane.getChildren().add(waitingPage);
 
         // Change network button in the top left corner that should disappear with a few seconds of no mouse movement
-        disconnectButton = new DisconnectButton(actionEvent -> onDisconnect());
+        disconnectButton = new DisconnectButton(actionEvent -> onNetDisconnect());
         disconnectButton.setVisible(false);
         mainPane.getChildren().add(disconnectButton);
         StackPane.setMargin(disconnectButton, new Insets(5, 5, 5, 5));
@@ -276,7 +274,7 @@ public class ApplicationCore extends Application {
         }
 
         // Change network button in the top left corner that should disappear with a few seconds of no mouse movement
-        disconnectButton = new DisconnectButton(actionEvent -> onDisconnect());
+        disconnectButton = new DisconnectButton(actionEvent -> onNetDisconnect());
         disconnectButton.setVisible(false);
         mainPane.getChildren().add(disconnectButton);
         StackPane.setMargin(disconnectButton, new Insets(5, 5, 5, 5));
@@ -315,25 +313,36 @@ public class ApplicationCore extends Application {
         Platform.runLater(() -> displayConnectedPage());
     }
 
-    private void onDisconnect() {
+    private void onSerialDisconnect(SerialDisconnectionEvent disconnectionEvent) {
+        if (connectionMode != CommunicationMode.Serial) {
+            return;
+        }
+
         Platform.runLater(() -> {
             pageRoller.removeAllPages();
             sensorMap.clear();
 
-            switch (connectionMode) {
-                case Serial:
-                    displaySerialAwaitingConnectionPage(null);
-                    break;
-                case Network:
-                    try {
-                        server.disconnectActiveConnection();
-                    } catch (InterruptedException e) {
-                        Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to disconnect active connection");
-                        Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
-                    }
-                    displayWaitingForConnectionPage();
-                    break;
+            String text = disconnectionEvent.isExpected() ? null : "Last session disconnected: " + disconnectionEvent.getReason();
+            displaySerialAwaitingConnectionPage(text);
+        });
+    }
+
+    private void onNetDisconnect() {
+        if (connectionMode != CommunicationMode.Network) {
+            return;
+        }
+
+        Platform.runLater(() -> {
+            pageRoller.removeAllPages();
+            sensorMap.clear();
+
+            try {
+                server.disconnectActiveConnection();
+            } catch (InterruptedException e) {
+                Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to disconnect active connection");
+                Logger.log(LogLevel.DEBUG, CLASS_NAME, e.getMessage());
             }
+            displayWaitingForConnectionPage();
         });
     }
 
@@ -436,7 +445,7 @@ public class ApplicationCore extends Application {
 
             server = new Server(siteLocalAddress,
                     connectEvent -> onConnect(),
-                    disconnectEvent -> onDisconnect(),
+                    disconnectEvent -> onNetDisconnect(),
                     pageMessageEvent -> processPageMessageEvent(pageMessageEvent),
                     sensorMessageEvent -> processSensorMessageEvent(sensorMessageEvent),
                     removePageEvent -> processRemovePageEvent(removePageEvent),
@@ -546,7 +555,7 @@ public class ApplicationCore extends Application {
                 Logger.log(LogLevel.INFO, CLASS_NAME, "TEST3");
                 SerialListener serialListener = new SerialListener(
                         serialPort,
-                        disconnectEvent -> onDisconnect(),
+                        disconnectEvent -> onSerialDisconnect(disconnectEvent),
                         pageMessageEvent -> processPageMessageEvent(pageMessageEvent),
                         sensorMessageEvent -> processSensorMessageEvent(sensorMessageEvent),
                         removePageEvent -> processRemovePageEvent(removePageEvent),

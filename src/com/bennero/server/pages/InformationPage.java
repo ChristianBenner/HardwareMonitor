@@ -28,6 +28,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.TextAlignment;
 
 /**
  * A page that displays configurable information/text
@@ -58,6 +59,8 @@ public class InformationPage extends StackPane {
         if (info != null) {
             Label infoLabel = new Label(info);
             infoLabel.setId("hw-welcome-page-subtitle");
+            infoLabel.setWrapText(true);
+            infoLabel.setTextAlignment(TextAlignment.CENTER);
             slide.getChildren().add(infoLabel);
         }
 

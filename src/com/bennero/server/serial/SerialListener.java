@@ -16,12 +16,15 @@ import static com.bennero.server.Version.*;
 public class SerialListener {
     private static final String LOGGER_TAG = SerialListener.class.getSimpleName();
 
+    private static final int WRITE_TIMEOUT_MS = 5000;
+    private static final int READ_TIMEOUT_MS = 5000;
+
     private String port;
     private SerialPort serialPort;
     private boolean connected;
     private UUID connectedUUID;
 
-    private EventHandler disconnectedEvent;
+    private EventHandler<SerialDisconnectionEvent> disconnectedEvent;
     private EventHandler<PageSetupEvent> pageMessageReceived;
     private EventHandler<SensorSetupEvent> sensorMessageReceived;
     private EventHandler<SensorDataEvent> sensorDataMessageReceived;
@@ -31,7 +34,7 @@ public class SerialListener {
     private EventHandler<FileTransferEvent> fileTransferEventHandler;
 
     public SerialListener(String port,
-                          EventHandler disconnectedEvent,
+                          EventHandler<SerialDisconnectionEvent> disconnectedEvent,
                           EventHandler<PageSetupEvent> pageMessageReceived,
                           EventHandler<SensorSetupEvent> sensorMessageReceived,
                           EventHandler<RemovePageEvent> removePageMessageReceived,
@@ -61,7 +64,7 @@ public class SerialListener {
         serialPort.setNumDataBits(8);
         serialPort.setNumStopBits(1);
         serialPort.setParity(SerialPort.EVEN_PARITY);
-        serialPort.setComPortTimeouts(SerialPort.TIMEOUT_WRITE_BLOCKING | SerialPort.TIMEOUT_READ_BLOCKING, 0, 0);
+        serialPort.setComPortTimeouts(SerialPort.TIMEOUT_WRITE_BLOCKING | SerialPort.TIMEOUT_READ_BLOCKING, READ_TIMEOUT_MS, WRITE_TIMEOUT_MS);
     }
 
     private boolean handshake(byte[] bytes, EventHandler<SerialConnectionEvent> handler) {
@@ -147,9 +150,7 @@ public class SerialListener {
          //       handleConnectionRequest(processConnectionRequestMessageData(bytes));
                 break;
             case MessageType.DISCONNECT:
-                connected = false;
-                connectedUUID = null;
-                disconnectedEvent.handle(null);
+                disconnect(true, "Editor requested");
                 break;
             case MessageType.FILE_TRANSFER:
                 FileTransferMessage fileTransferMessage = new FileTransferMessage(bytes);
@@ -190,6 +191,25 @@ public class SerialListener {
         }).start();
     }
 
+    private boolean write(Message message) {
+        int numWrite = serialPort.writeBytes(message.write(), Message.NUM_BYTES);
+        if (numWrite < Message.NUM_BYTES) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void disconnect(boolean expected, String reason) {
+        if (connected) {
+            LogLevel logLevel = expected ? LogLevel.INFO : LogLevel.WARNING;
+            Logger.logf(logLevel, LOGGER_TAG, "Disconnected: %s", reason);
+            connected = false;
+            connectedUUID = null;
+            disconnectedEvent.handle(new SerialDisconnectionEvent(expected, reason));
+        }
+    }
+
     private void read(EventHandler<SerialConnectionEvent> handler) {
         byte[] bytes = new byte[Message.NUM_BYTES];
         int numRead = serialPort.readBytes(bytes, Message.NUM_BYTES);
@@ -201,19 +221,23 @@ public class SerialListener {
         }
 
         if (numRead < Message.NUM_BYTES) {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected read amount on serial port: " +  numRead);
+            disconnect(false, "Read timeout");
+            return;
         }
 
         boolean valid = Message.isValid(bytes);
         if (!valid) {
             // err, ask for re-send
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Invalid checksum on received message");
+            Logger.log(LogLevel.WARNING, LOGGER_TAG, "Invalid checksum on received message");
 
             // Todo: when this happens we should flush the entire serial port buffer (throw away) as there may
             //  be some bad data there and respond to the hardware monitor editor stating bad message
 
             ConfirmationMessage out = new ConfirmationMessage(Identity.getMyUuid(), false);
-            serialPort.writeBytes(out.write(), Message.NUM_BYTES);
+            if (!write(out)) {
+                disconnect(false, "Write timeout");
+            }
+
             return;
         }
 
@@ -232,6 +256,8 @@ public class SerialListener {
 
         valid = readMessage(bytes);
         ConfirmationMessage out = new ConfirmationMessage(Identity.getMyUuid(), valid);
-        serialPort.writeBytes(out.write(), Message.NUM_BYTES);
+        if (!write(out)) {
+            disconnect(false, "Write timeout");
+        }
     }
 }
